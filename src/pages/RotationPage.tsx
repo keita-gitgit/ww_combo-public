@@ -1,4 +1,5 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useRef, useState } from 'react'
+import type { PointerEvent as ReactPointerEvent } from 'react'
 import type { AppData, Character, Combo, ComboAction, ComboStep } from '../types'
 import { newId } from '../types'
 import { resolveButtonForAction } from '../seed'
@@ -14,6 +15,7 @@ interface Props {
 export default function RotationPage({ data, setData }: Props) {
   const [selectedComboId, setSelectedComboId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
 
   const combo = data.combos.find((c) => c.id === selectedComboId)
 
@@ -25,6 +27,7 @@ export default function RotationPage({ data, setData }: Props) {
   const deleteCombo = (id: string) => {
     if (!confirm('このローテーションを削除しますか？')) return
     setData({ ...data, combos: data.combos.filter((x) => x.id !== id) })
+    setOpenSwipeId(null)
     setSelectedComboId(null)
   }
 
@@ -133,35 +136,130 @@ export default function RotationPage({ data, setData }: Props) {
       </header>
 
       {data.combos.length === 0 && (
-        <p className="empty">
+        <button className="empty empty-action" onClick={() => setCreating(true)}>
           「＋ 作成」からキャラを選んで、ローテーションの記録を始めましょう
-        </p>
+          <span className="empty-action-label">タップして作成 →</span>
+        </button>
       )}
       {data.combos.map((c) => {
         const party = data.parties.find((p) => p.id === c.partyId)
+        const members = (party?.memberIds ?? [])
+          .map((id) => data.characters.find((x) => x.id === id))
+          .filter((character): character is Character => Boolean(character))
         return (
-          <button
+          <SwipeableComboCard
             key={c.id}
-            className="card row-card with-avatar"
-            onClick={() => setSelectedComboId(c.id)}
-          >
-            <span className="avatar-stack">
-              {(party?.memberIds ?? []).map((id) => (
-                <Avatar key={id} character={data.characters.find((x) => x.id === id)} size={40} />
-              ))}
-            </span>
-            <span className="row-card-text">
-              <span className="card-title">{c.title}</span>
-              <span className="card-sub">
-                {(party?.memberIds ?? [])
-                  .map((id) => data.characters.find((x) => x.id === id)?.name ?? '?')
-                  .join(' / ')}{' '}
-                ・ {c.steps.length}行
-              </span>
-            </span>
-          </button>
+            combo={c}
+            members={members}
+            open={openSwipeId === c.id}
+            onOpen={() => {
+              setOpenSwipeId(null)
+              setSelectedComboId(c.id)
+            }}
+            onSwipeOpen={() => setOpenSwipeId(c.id)}
+            onSwipeClose={() => setOpenSwipeId(null)}
+            onDelete={() => deleteCombo(c.id)}
+          />
         )
       })}
+    </div>
+  )
+}
+
+const SWIPE_REVEAL_PX = 88
+
+function SwipeableComboCard({
+  combo,
+  members,
+  open,
+  onOpen,
+  onSwipeOpen,
+  onSwipeClose,
+  onDelete,
+}: {
+  combo: Combo
+  members: Character[]
+  open: boolean
+  onOpen: () => void
+  onSwipeOpen: () => void
+  onSwipeClose: () => void
+  onDelete: () => void
+}) {
+  const [dragging, setDragging] = useState(false)
+  const [dragOffset, setDragOffset] = useState(0)
+  const startX = useRef<number | null>(null)
+  const dragOffsetRef = useRef(0)
+  const moved = useRef(false)
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return
+    const initialOffset = open ? -SWIPE_REVEAL_PX : 0
+    startX.current = event.clientX
+    dragOffsetRef.current = initialOffset
+    moved.current = false
+    setDragOffset(initialOffset)
+    setDragging(true)
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (startX.current === null) return
+    const baseOffset = open ? -SWIPE_REVEAL_PX : 0
+    const delta = event.clientX - startX.current
+    if (Math.abs(delta) > 8) moved.current = true
+    const nextOffset = Math.max(-SWIPE_REVEAL_PX, Math.min(0, baseOffset + delta))
+    dragOffsetRef.current = nextOffset
+    setDragOffset(nextOffset)
+  }
+
+  const finishSwipe = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (startX.current === null) return
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    startX.current = null
+    setDragging(false)
+    if (dragOffsetRef.current <= -SWIPE_REVEAL_PX / 2) onSwipeOpen()
+    else onSwipeClose()
+  }
+
+  const visualOffset = dragging ? dragOffset : open ? -SWIPE_REVEAL_PX : 0
+
+  return (
+    <div className={`swipe-row ${open ? 'open' : ''}`}>
+      <button className="swipe-delete" onClick={onDelete} aria-label={`${combo.title}を削除`}>
+        削除
+      </button>
+      <button
+        className={`card row-card with-avatar swipe-card ${dragging ? 'dragging' : ''}`}
+        style={{ transform: `translateX(${visualOffset}px)` }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={finishSwipe}
+        onPointerCancel={finishSwipe}
+        onClick={(event) => {
+          if (moved.current) {
+            moved.current = false
+            event.preventDefault()
+            return
+          }
+          if (open) onSwipeClose()
+          else onOpen()
+        }}
+        aria-label={`${combo.title}。左へスワイプすると削除できます`}
+      >
+        <span className="avatar-stack">
+          {members.map((member) => (
+            <Avatar key={member.id} character={member} size={40} />
+          ))}
+        </span>
+        <span className="row-card-text">
+          <span className="card-title">{combo.title}</span>
+          <span className="card-sub">
+            {members.map((member) => member.name).join(' / ')} ・ {combo.steps.length}行
+          </span>
+        </span>
+      </button>
     </div>
   )
 }
@@ -179,6 +277,23 @@ function MemberPicker({
 }) {
   const [selected, setSelected] = useState<string[]>([])
   const [query, setQuery] = useState('')
+  const [element, setElement] = useState('')
+  const [weapon, setWeapon] = useState('')
+
+  const elements = [
+    ...new Set(
+      characters.flatMap((character) => (character.element ? [character.element] : [])),
+    ),
+  ]
+  const weapons = [
+    ...new Set(characters.flatMap((character) => (character.weapon ? [character.weapon] : []))),
+  ]
+  const filteredCharacters = characters.filter(
+    (character) =>
+      (!query || character.name.includes(query.trim())) &&
+      (!element || character.element === element) &&
+      (!weapon || character.weapon === weapon),
+  )
 
   const toggle = (id: string) => {
     if (selected.includes(id)) {
@@ -226,33 +341,60 @@ function MemberPicker({
       </div>
       <input
         className="search-input"
-        placeholder="🔍 キャラ名・属性・武器で絞り込み"
+        placeholder="🔍 キャラ名で絞り込み"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
+      <div className="picker-filters">
+        <label className="picker-filter">
+          <span>属性</span>
+          <select
+            aria-label="属性"
+            value={element}
+            onChange={(event) => setElement(event.target.value)}
+          >
+            <option value="">すべて</option>
+            {elements.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="picker-filter">
+          <span>武器種</span>
+          <select
+            aria-label="武器種"
+            value={weapon}
+            onChange={(event) => setWeapon(event.target.value)}
+          >
+            <option value="">すべて</option>
+            {weapons.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       <div className="chip-grid">
-        {characters
-          .filter(
-            (c) =>
-              !query ||
-              c.name.includes(query) ||
-              (c.element ?? '').includes(query) ||
-              (c.weapon ?? '').includes(query),
+        {filteredCharacters.length === 0 && (
+          <p className="filter-empty">条件に合うキャラがいません</p>
+        )}
+        {filteredCharacters.map((c) => {
+          const idx = selected.indexOf(c.id)
+          return (
+            <button
+              key={c.id}
+              className={`chip with-avatar ${idx >= 0 ? 'selected' : ''}`}
+              onClick={() => toggle(c.id)}
+            >
+              <Avatar character={c} size={26} />
+              {idx >= 0 ? `${idx + 1}. ` : ''}
+              {c.name}
+            </button>
           )
-          .map((c) => {
-            const idx = selected.indexOf(c.id)
-            return (
-              <button
-                key={c.id}
-                className={`chip with-avatar ${idx >= 0 ? 'selected' : ''}`}
-                onClick={() => toggle(c.id)}
-              >
-                <Avatar character={c} size={26} />
-                {idx >= 0 ? `${idx + 1}. ` : ''}
-                {c.name}
-              </button>
-            )
-          })}
+        })}
       </div>
     </div>
   )
