@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="鳴潮コンボノート">
+  <defs>
+    <linearGradient id="bg" x1="74" y1="38" x2="430" y2="474" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#142b3b"/>
+      <stop offset="0.55" stop-color="#091722"/>
+      <stop offset="1" stop-color="#050b11"/>
+    </linearGradient>
+    <linearGradient id="line" x1="134" y1="147" x2="384" y2="372" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#dff7ff"/>
+      <stop offset="0.42" stop-color="#8ddcff"/>
+      <stop offset="1" stop-color="#8f9ce8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(382 112) rotate(132) scale(265)">
+      <stop stop-color="#78d8ff" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#78d8ff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="10" result="blur"/>
+      <feColorMatrix in="blur" values="0 0 0 0 0.2 0 0 0 0 0.72 0 0 0 0 1 0 0 0 .34 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="#050b11"/>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+  <rect x="22" y="22" width="468" height="468" rx="92" fill="none" stroke="#b8eaff" stroke-opacity="0.12" stroke-width="3"/>
+  <g filter="url(#shadow)">
+    <path d="M132 338c38-110 84-164 139-161 45 2 47 73 87 72 26 0 43-28 56-58" fill="none" stroke="url(#line)" stroke-width="28" stroke-linecap="round"/>
+    <path d="M124 374c35-35 72-48 111-39 38 9 61 31 94 23 29-7 52-32 69-69" fill="none" stroke="#8ddcff" stroke-opacity="0.32" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="132" cy="338" r="32" fill="#091722" stroke="#dff7ff" stroke-width="13"/>
+    <circle cx="271" cy="177" r="32" fill="#091722" stroke="#9ce3ff" stroke-width="13"/>
+    <circle cx="358" cy="249" r="32" fill="#091722" stroke="#9daaf1" stroke-width="13"/>
+  </g>
+</svg>
