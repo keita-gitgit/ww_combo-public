@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import type {
+  CSSProperties,
   FormEvent as ReactFormEvent,
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
@@ -16,6 +17,17 @@ interface Props {
 }
 
 const LONG_PRESS_MS = 450
+const SORT_CLICK_GUARD_MS = 500
+
+let sortClickGuardUntil = 0
+
+function guardClicksAfterSort() {
+  sortClickGuardUntil = Date.now() + SORT_CLICK_GUARD_MS
+}
+
+function isSortClickGuarded(): boolean {
+  return Date.now() < sortClickGuardUntil
+}
 
 function moveItemTo<T extends { id: string }>(items: T[], sourceId: string, targetId: string): T[] {
   const sourceIndex = items.findIndex((item) => item.id === sourceId)
@@ -39,6 +51,7 @@ function useLongPressSort({
   onSortStart?: () => void
 }) {
   const [sorting, setSorting] = useState(false)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const suppressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const startPoint = useRef<{ x: number; y: number } | null>(null)
@@ -68,6 +81,7 @@ function useLongPressSort({
     surface.current = null
     sortingRef.current = false
     targetId.current = id
+    setDragOffset({ x: 0, y: 0 })
     setSorting(false)
   }
 
@@ -94,6 +108,7 @@ function useLongPressSort({
     timer.current = setTimeout(() => {
       sortingRef.current = true
       suppressClickRef.current = true
+      setDragOffset({ x: 0, y: 0 })
       setSorting(true)
       document.body.classList.add('sorting-active')
       onSortStart?.()
@@ -119,22 +134,27 @@ function useLongPressSort({
 
     event.preventDefault()
     event.stopPropagation()
+    setDragOffset({ x: event.clientX - start.x, y: event.clientY - start.y })
 
     const edge = 72
     if (event.clientY < edge) window.scrollBy(0, -12)
     else if (event.clientY > window.innerHeight - edge) window.scrollBy(0, 12)
 
     const candidate = document
-      .elementFromPoint(event.clientX, event.clientY)
-      ?.closest<HTMLElement>('[data-sort-id]')
-    if (!candidate || candidate.dataset.sortGroup !== group) return true
-
-    const nextTargetId = candidate.dataset.sortId
-    if (!nextTargetId) return true
+      .elementsFromPoint(event.clientX, event.clientY)
+      .map((element) => element.closest<HTMLElement>('[data-sort-id]'))
+      .find(
+        (element, index, elements) =>
+          element !== null &&
+          elements.indexOf(element) === index &&
+          element.dataset.sortGroup === group &&
+          element.dataset.sortId !== id,
+      )
+    const nextTargetId = candidate?.dataset.sortId ?? id
     targetId.current = nextTargetId
     if (candidate !== targetElement.current) {
       clearTarget()
-      if (nextTargetId !== id) {
+      if (candidate) {
         candidate.classList.add('sort-drop-target')
         targetElement.current = candidate
       }
@@ -155,6 +175,7 @@ function useLongPressSort({
     if (wasSorting) {
       event.preventDefault()
       event.stopPropagation()
+      guardClicksAfterSort()
       reset()
       if (commit && destination !== id) onMove(id, destination)
       if (suppressTimer.current) clearTimeout(suppressTimer.current)
@@ -182,6 +203,7 @@ function useLongPressSort({
 
   return {
     sorting,
+    dragOffset,
     handlePointerDown,
     handlePointerMove,
     finish,
@@ -211,13 +233,20 @@ function SortableItem({
       className={`sortable-item ${sort.sorting ? 'sorting' : ''} ${className}`}
       data-sort-id={id}
       data-sort-group={group}
+      style={
+        sort.sorting
+          ? ({
+              transform: `translate3d(${sort.dragOffset.x}px, ${sort.dragOffset.y - 5}px, 0) scale(1.025)`,
+            } satisfies CSSProperties)
+          : undefined
+      }
       onPointerDown={sort.handlePointerDown}
       onPointerMove={sort.handlePointerMove}
       onPointerUp={(event) => sort.finish(event)}
       onPointerCancel={(event) => sort.finish(event, false)}
       onContextMenu={sort.preventContextMenu}
       onClickCapture={(event) => {
-        if (!sort.consumeClick()) return
+        if (!sort.consumeClick() && !isSortClickGuarded()) return
         event.preventDefault()
         event.stopPropagation()
       }}
@@ -474,8 +503,12 @@ function SwipeableComboCard({
 
   const visualOffset = dragging ? dragOffset : open ? -SWIPE_REVEAL_PX : 0
 
+  const cardTransform = sort.sorting
+    ? `translate3d(${sort.dragOffset.x}px, ${sort.dragOffset.y - 5}px, 0) scale(1.025)`
+    : `translateX(${visualOffset}px)`
+
   return (
-    <div className={`swipe-row ${open ? 'open' : ''}`}>
+    <div className={`swipe-row ${open ? 'open' : ''} ${sort.sorting ? 'sorting' : ''}`}>
       <button
         className="swipe-delete"
         data-sort-ignore
@@ -489,14 +522,14 @@ function SwipeableComboCard({
         data-sort-id={combo.id}
         data-sort-group="combos"
         data-sort-handle
-        style={{ transform: `translateX(${visualOffset}px)` }}
+        style={{ transform: cardTransform }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={finishSwipe}
         onPointerCancel={(event) => finishSwipe(event, false)}
         onContextMenu={sort.preventContextMenu}
         onClick={(event) => {
-          if (sort.consumeClick() || moved.current) {
+          if (sort.consumeClick() || isSortClickGuarded() || moved.current) {
             moved.current = false
             event.preventDefault()
             return
