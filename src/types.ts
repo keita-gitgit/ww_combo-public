@@ -66,6 +66,8 @@ export interface Combo {
   partyId: string
   title: string
   memo?: string
+  /** 参考にした動画・投稿のURL（最大20件） */
+  referenceUrls?: string[]
   steps: ComboStep[]
   updatedAt: string
 }

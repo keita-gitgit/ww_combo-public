@@ -1,5 +1,10 @@
-import { Fragment, useRef, useState } from 'react'
-import type { PointerEvent as ReactPointerEvent } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import type {
+  FormEvent as ReactFormEvent,
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from 'react'
 import type { AppData, Character, Combo, ComboAction, ComboStep } from '../types'
 import { newId } from '../types'
 import { resolveButtonForAction } from '../seed'
@@ -8,6 +13,218 @@ import Avatar from '../components/Avatar'
 interface Props {
   data: AppData
   setData: (d: AppData) => void
+}
+
+const LONG_PRESS_MS = 450
+
+function moveItemTo<T extends { id: string }>(items: T[], sourceId: string, targetId: string): T[] {
+  const sourceIndex = items.findIndex((item) => item.id === sourceId)
+  const targetIndex = items.findIndex((item) => item.id === targetId)
+  if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return items
+  const next = [...items]
+  const [moved] = next.splice(sourceIndex, 1)
+  next.splice(targetIndex, 0, moved)
+  return next
+}
+
+function useLongPressSort({
+  id,
+  group,
+  onMove,
+  onSortStart,
+}: {
+  id: string
+  group: string
+  onMove: (sourceId: string, targetId: string) => void
+  onSortStart?: () => void
+}) {
+  const [sorting, setSorting] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const suppressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const startPoint = useRef<{ x: number; y: number } | null>(null)
+  const pointerId = useRef<number | null>(null)
+  const surface = useRef<HTMLElement | null>(null)
+  const sortingRef = useRef(false)
+  const suppressClickRef = useRef(false)
+  const targetId = useRef(id)
+  const targetElement = useRef<HTMLElement | null>(null)
+
+  const clearPressTimer = () => {
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = null
+  }
+
+  const clearTarget = () => {
+    targetElement.current?.classList.remove('sort-drop-target')
+    targetElement.current = null
+  }
+
+  const reset = () => {
+    clearPressTimer()
+    clearTarget()
+    document.body.classList.remove('sorting-active')
+    startPoint.current = null
+    pointerId.current = null
+    surface.current = null
+    sortingRef.current = false
+    targetId.current = id
+    setSorting(false)
+  }
+
+  useEffect(
+    () => () => {
+      clearPressTimer()
+      if (suppressTimer.current) clearTimeout(suppressTimer.current)
+      clearTarget()
+      document.body.classList.remove('sorting-active')
+    },
+    [],
+  )
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.button !== 0) return
+    const target = event.target as HTMLElement
+    if (!target.closest('[data-sort-handle]') || target.closest('[data-sort-ignore]')) return
+
+    clearPressTimer()
+    startPoint.current = { x: event.clientX, y: event.clientY }
+    pointerId.current = event.pointerId
+    surface.current = event.currentTarget
+    targetId.current = id
+    timer.current = setTimeout(() => {
+      sortingRef.current = true
+      suppressClickRef.current = true
+      setSorting(true)
+      document.body.classList.add('sorting-active')
+      onSortStart?.()
+      if (pointerId.current !== null && surface.current) {
+        try {
+          surface.current.setPointerCapture(pointerId.current)
+        } catch {
+          // ポインターが離れた直後なら取得できないため、そのまま終了処理に任せる
+        }
+      }
+      navigator.vibrate?.(12)
+    }, LONG_PRESS_MS)
+  }
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLElement>): boolean => {
+    const start = startPoint.current
+    if (!start) return false
+
+    if (!sortingRef.current) {
+      if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10) clearPressTimer()
+      return false
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    const edge = 72
+    if (event.clientY < edge) window.scrollBy(0, -12)
+    else if (event.clientY > window.innerHeight - edge) window.scrollBy(0, 12)
+
+    const candidate = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest<HTMLElement>('[data-sort-id]')
+    if (!candidate || candidate.dataset.sortGroup !== group) return true
+
+    const nextTargetId = candidate.dataset.sortId
+    if (!nextTargetId) return true
+    targetId.current = nextTargetId
+    if (candidate !== targetElement.current) {
+      clearTarget()
+      if (nextTargetId !== id) {
+        candidate.classList.add('sort-drop-target')
+        targetElement.current = candidate
+      }
+    }
+    return true
+  }
+
+  const finish = (event: ReactPointerEvent<HTMLElement>, commit = true): boolean => {
+    if (!startPoint.current) return false
+    clearPressTimer()
+    const wasSorting = sortingRef.current
+    const destination = targetId.current
+
+    if (pointerId.current !== null && event.currentTarget.hasPointerCapture(pointerId.current)) {
+      event.currentTarget.releasePointerCapture(pointerId.current)
+    }
+
+    if (wasSorting) {
+      event.preventDefault()
+      event.stopPropagation()
+      reset()
+      if (commit && destination !== id) onMove(id, destination)
+      if (suppressTimer.current) clearTimeout(suppressTimer.current)
+      suppressTimer.current = setTimeout(() => {
+        suppressClickRef.current = false
+      }, 120)
+    } else {
+      startPoint.current = null
+      pointerId.current = null
+      surface.current = null
+    }
+    return wasSorting
+  }
+
+  const consumeClick = (): boolean => {
+    if (!suppressClickRef.current) return false
+    suppressClickRef.current = false
+    return true
+  }
+
+  const preventContextMenu = (event: ReactMouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement
+    if (target.closest('[data-sort-handle]')) event.preventDefault()
+  }
+
+  return {
+    sorting,
+    handlePointerDown,
+    handlePointerMove,
+    finish,
+    consumeClick,
+    preventContextMenu,
+  }
+}
+
+function SortableItem({
+  id,
+  group,
+  onMove,
+  onSortStart,
+  className = '',
+  children,
+}: {
+  id: string
+  group: string
+  onMove: (sourceId: string, targetId: string) => void
+  onSortStart?: () => void
+  className?: string
+  children: ReactNode
+}) {
+  const sort = useLongPressSort({ id, group, onMove, onSortStart })
+  return (
+    <div
+      className={`sortable-item ${sort.sorting ? 'sorting' : ''} ${className}`}
+      data-sort-id={id}
+      data-sort-group={group}
+      onPointerDown={sort.handlePointerDown}
+      onPointerMove={sort.handlePointerMove}
+      onPointerUp={(event) => sort.finish(event)}
+      onPointerCancel={(event) => sort.finish(event, false)}
+      onContextMenu={sort.preventContextMenu}
+      onClickCapture={(event) => {
+        if (!sort.consumeClick()) return
+        event.preventDefault()
+        event.stopPropagation()
+      }}
+    >
+      {children}
+    </div>
+  )
 }
 
 // 「作成」→ キャラを選ぶ → そのままローテーション記録、まで1タブで完結するページ。
@@ -29,6 +246,11 @@ export default function RotationPage({ data, setData }: Props) {
     setData({ ...data, combos: data.combos.filter((x) => x.id !== id) })
     setOpenSwipeId(null)
     setSelectedComboId(null)
+  }
+
+  const reorderCombo = (sourceId: string, targetId: string) => {
+    const combos = moveItemTo(data.combos, sourceId, targetId)
+    if (combos !== data.combos) setData({ ...data, combos })
   }
 
   // キャラ選択からローテーション作成まで（同じ編成のパーティがあれば再利用）
@@ -141,6 +363,9 @@ export default function RotationPage({ data, setData }: Props) {
           <span className="empty-action-label">タップして作成 →</span>
         </button>
       )}
+      {data.combos.length > 1 && (
+        <p className="sort-hint list-sort-hint">カード右端の⠿を長押しして並べ替え</p>
+      )}
       {data.combos.map((c) => {
         const party = data.parties.find((p) => p.id === c.partyId)
         const members = (party?.memberIds ?? [])
@@ -159,6 +384,7 @@ export default function RotationPage({ data, setData }: Props) {
             onSwipeOpen={() => setOpenSwipeId(c.id)}
             onSwipeClose={() => setOpenSwipeId(null)}
             onDelete={() => deleteCombo(c.id)}
+            onReorder={reorderCombo}
           />
         )
       })}
@@ -176,6 +402,7 @@ function SwipeableComboCard({
   onSwipeOpen,
   onSwipeClose,
   onDelete,
+  onReorder,
 }: {
   combo: Combo
   members: Character[]
@@ -184,15 +411,30 @@ function SwipeableComboCard({
   onSwipeOpen: () => void
   onSwipeClose: () => void
   onDelete: () => void
+  onReorder: (sourceId: string, targetId: string) => void
 }) {
   const [dragging, setDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
   const startX = useRef<number | null>(null)
   const dragOffsetRef = useRef(0)
   const moved = useRef(false)
+  const sort = useLongPressSort({
+    id: combo.id,
+    group: 'combos',
+    onMove: onReorder,
+    onSortStart: () => {
+      startX.current = null
+      dragOffsetRef.current = 0
+      moved.current = true
+      setDragOffset(0)
+      setDragging(false)
+      onSwipeClose()
+    },
+  })
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.button !== 0) return
+    sort.handlePointerDown(event)
     const initialOffset = open ? -SWIPE_REVEAL_PX : 0
     startX.current = event.clientX
     dragOffsetRef.current = initialOffset
@@ -203,6 +445,7 @@ function SwipeableComboCard({
   }
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (sort.handlePointerMove(event)) return
     if (startX.current === null) return
     const baseOffset = open ? -SWIPE_REVEAL_PX : 0
     const delta = event.clientX - startX.current
@@ -212,7 +455,13 @@ function SwipeableComboCard({
     setDragOffset(nextOffset)
   }
 
-  const finishSwipe = (event: ReactPointerEvent<HTMLButtonElement>) => {
+  const finishSwipe = (event: ReactPointerEvent<HTMLButtonElement>, commitSort = true) => {
+    if (sort.finish(event, commitSort)) {
+      startX.current = null
+      setDragging(false)
+      moved.current = true
+      return
+    }
     if (startX.current === null) return
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
@@ -227,18 +476,27 @@ function SwipeableComboCard({
 
   return (
     <div className={`swipe-row ${open ? 'open' : ''}`}>
-      <button className="swipe-delete" onClick={onDelete} aria-label={`${combo.title}を削除`}>
+      <button
+        className="swipe-delete"
+        data-sort-ignore
+        onClick={onDelete}
+        aria-label={`${combo.title}を削除`}
+      >
         削除
       </button>
       <button
-        className={`card row-card with-avatar swipe-card ${dragging ? 'dragging' : ''}`}
+        className={`card row-card with-avatar swipe-card ${dragging ? 'dragging' : ''} ${sort.sorting ? 'sorting' : ''}`}
+        data-sort-id={combo.id}
+        data-sort-group="combos"
+        data-sort-handle
         style={{ transform: `translateX(${visualOffset}px)` }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={finishSwipe}
-        onPointerCancel={finishSwipe}
+        onPointerCancel={(event) => finishSwipe(event, false)}
+        onContextMenu={sort.preventContextMenu}
         onClick={(event) => {
-          if (moved.current) {
+          if (sort.consumeClick() || moved.current) {
             moved.current = false
             event.preventDefault()
             return
@@ -246,7 +504,7 @@ function SwipeableComboCard({
           if (open) onSwipeClose()
           else onOpen()
         }}
-        aria-label={`${combo.title}。左へスワイプすると削除できます`}
+        aria-label={`${combo.title}。長押しで並べ替え、左へスワイプすると削除できます`}
       >
         <span className="avatar-stack">
           {members.map((member) => (
@@ -258,6 +516,9 @@ function SwipeableComboCard({
           <span className="card-sub">
             {members.map((member) => member.name).join(' / ')} ・ {combo.steps.length}行
           </span>
+        </span>
+        <span className="drag-grip" data-sort-handle aria-hidden="true">
+          ⠿
         </span>
       </button>
     </div>
@@ -461,6 +722,11 @@ function ComboEditor({
     onChange({ ...combo, steps })
   }
 
+  const reorderStep = (sourceId: string, targetId: string) => {
+    const steps = moveItemTo(combo.steps, sourceId, targetId)
+    if (steps !== combo.steps) onChange({ ...combo, steps })
+  }
+
   const appendAction = (step: ComboStep, actionId: string) => {
     setStep({ ...step, actions: [...step.actions, { id: newId(), actionId }] })
   }
@@ -549,6 +815,9 @@ function ComboEditor({
             )
           })}
         </div>
+        {(combo.referenceUrls?.length ?? 0) > 0 && (
+          <ReferenceLinks urls={combo.referenceUrls ?? []} />
+        )}
       </div>
     )
   }
@@ -572,139 +841,161 @@ function ComboEditor({
         />
       </section>
 
+      {combo.steps.length > 1 && (
+        <p className="sort-hint">キャラ名または⠿を長押しして並べ替え</p>
+      )}
+
       {combo.steps.map((s, si) => {
         const ch = charOf(s.characterId)
         const active = activeStepId === s.id
         return (
-          <div key={s.id} className={`card step-card ${active ? 'active' : ''}`}>
-            <div className="step-head">
-              <button
-                className={`step-char ${slotClass(s.characterId)}`}
-                onClick={() => {
-                  setActiveStepId(active ? null : s.id)
-                  setActiveActionId(null)
-                }}
-                aria-expanded={active}
-              >
-                <Avatar character={ch} size={34} />
-                <span className="step-char-copy">
-                  <span className="step-char-name">{ch?.name}</span>
-                  <span className="step-meta">
-                    ステップ {si + 1}・
-                    {active ? '技パレットを表示中' : `${s.actions.length}アクション`}
+          <SortableItem
+            key={s.id}
+            id={s.id}
+            group={`steps-${combo.id}`}
+            onMove={reorderStep}
+            onSortStart={() => {
+              setActiveStepId(null)
+              setActiveActionId(null)
+            }}
+            className="step-sortable"
+          >
+            <div className={`card step-card ${active ? 'active' : ''}`}>
+              <div className="step-head">
+                <button
+                  className={`step-char ${slotClass(s.characterId)}`}
+                  data-sort-handle
+                  onClick={() => {
+                    setActiveStepId(active ? null : s.id)
+                    setActiveActionId(null)
+                  }}
+                  aria-expanded={active}
+                >
+                  <Avatar character={ch} size={34} />
+                  <span className="step-char-copy">
+                    <span className="step-char-name">{ch?.name}</span>
+                    <span className="step-meta">
+                      ステップ {si + 1}・
+                      {active
+                        ? '技パレットを表示中'
+                        : `${s.actions.length}アクション・長押しで移動`}
+                    </span>
                   </span>
+                </button>
+                <span className="drag-grip step-drag-grip" data-sort-handle aria-hidden="true">
+                  ⠿
                 </span>
-              </button>
-              <span className="step-tools">
-                <button
-                  className="icon-btn"
-                  onClick={() => moveStep(s.id, -1)}
-                  disabled={si === 0}
-                  aria-label="上へ移動"
-                >
-                  ↑
-                </button>
-                <button
-                  className="icon-btn"
-                  onClick={() => moveStep(s.id, 1)}
-                  disabled={si === combo.steps.length - 1}
-                  aria-label="下へ移動"
-                >
-                  ↓
-                </button>
-                <button className="icon-btn" onClick={() => removeStep(s.id)} aria-label="削除">
-                  ×
-                </button>
-              </span>
-            </div>
-
-            <div className="step-actions">
-              {s.actions.length === 0 && <span className="hint">技をタップして追加 →</span>}
-              {s.actions.map((a, i) => (
-                <Fragment key={a.id}>
-                  {i > 0 && <span className="view-sep">→</span>}
+                <span className="step-tools" data-sort-ignore>
                   <button
-                    className={`action-chip ${activeActionId === a.id ? 'editing' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setActiveStepId(s.id)
-                      setActiveActionId(activeActionId === a.id ? null : a.id)
-                    }}
+                    className="icon-btn"
+                    onClick={() => moveStep(s.id, -1)}
+                    disabled={si === 0}
+                    aria-label="上へ移動"
                   >
-                    <ActionText action={a} character={ch} buttonMap={buttonMap} />
+                    ↑
                   </button>
-                </Fragment>
-              ))}
-            </div>
+                  <button
+                    className="icon-btn"
+                    onClick={() => moveStep(s.id, 1)}
+                    disabled={si === combo.steps.length - 1}
+                    aria-label="下へ移動"
+                  >
+                    ↓
+                  </button>
+                  <button className="icon-btn" onClick={() => removeStep(s.id)} aria-label="削除">
+                    ×
+                  </button>
+                </span>
+              </div>
 
-            {active && activeActionId && (
-              <ActionDetailEditor
-                step={s}
-                actionId={activeActionId}
-                onChange={setStep}
-                onClose={() => setActiveActionId(null)}
-              />
-            )}
-
-            {active && !activeActionId && ch && (
-              <div className="palette">
-                <div className="palette-heading">
-                  <span>技をタップして追加</span>
-                  <span className="live-state">編集中</span>
-                </div>
-                {organizing && (
-                  <div className="hint organize-hint">
-                    技をタップして名前を変更（空にすると削除）
-                  </div>
-                )}
-                {ch.actions.map((a) =>
-                  organizing ? (
+              <div className="step-actions">
+                {s.actions.length === 0 && <span className="hint">技をタップして追加 →</span>}
+                {s.actions.map((a, i) => (
+                  <Fragment key={a.id}>
+                    {i > 0 && <span className="view-sep">→</span>}
                     <button
-                      key={a.id}
-                      className="chip organize"
-                      onClick={() => {
-                        const v = prompt('技名を編集（空にすると削除）', a.name)
-                        if (v === null) return
-                        if (v.trim() === '') onDeleteCharacterAction(ch.id, a.id)
-                        else onRenameCharacterAction(ch.id, a.id, v.trim())
+                      className={`action-chip ${activeActionId === a.id ? 'editing' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setActiveStepId(s.id)
+                        setActiveActionId(activeActionId === a.id ? null : a.id)
                       }}
                     >
-                      ✎ {a.name}
+                      <ActionText action={a} character={ch} buttonMap={buttonMap} />
                     </button>
-                  ) : (
-                    <button key={a.id} className="chip" onClick={() => appendAction(s, a.id)}>
-                      {a.name}
-                      {(a.button ?? resolveButtonForAction(a.name, buttonMap)) && (
-                        <span className="btn-label">
-                          {a.button ?? resolveButtonForAction(a.name, buttonMap)}
-                        </span>
-                      )}
-                    </button>
-                  ),
-                )}
-                <div className="palette-utilities">
-                  <button className="chip add-chip" onClick={() => addCustomAction(ch)}>
-                    ＋ 技を追加
-                  </button>
-                  <button
-                    className={`chip add-chip ${organizing ? 'selected' : ''}`}
-                    onClick={() => setOrganizing(!organizing)}
-                  >
-                    {organizing ? '完了' : '技の整理'}
-                  </button>
-                </div>
+                  </Fragment>
+                ))}
               </div>
-            )}
 
-            {active && (
-              <input
-                className="memo-input"
-                placeholder="この行のポイント（※〜）"
-                value={s.note ?? ''}
-                onChange={(e) => setStep({ ...s, note: e.target.value })}
-              />
-            )}
-          </div>
+              {active && activeActionId && (
+                <ActionDetailEditor
+                  step={s}
+                  actionId={activeActionId}
+                  onChange={setStep}
+                  onClose={() => setActiveActionId(null)}
+                />
+              )}
+
+              {active && !activeActionId && ch && (
+                <div className="palette">
+                  <div className="palette-heading">
+                    <span>技をタップして追加</span>
+                    <span className="live-state">編集中</span>
+                  </div>
+                  {organizing && (
+                    <div className="hint organize-hint">
+                      技をタップして名前を変更（空にすると削除）
+                    </div>
+                  )}
+                  {ch.actions.map((a) =>
+                    organizing ? (
+                      <button
+                        key={a.id}
+                        className="chip organize"
+                        onClick={() => {
+                          const v = prompt('技名を編集（空にすると削除）', a.name)
+                          if (v === null) return
+                          if (v.trim() === '') onDeleteCharacterAction(ch.id, a.id)
+                          else onRenameCharacterAction(ch.id, a.id, v.trim())
+                        }}
+                      >
+                        ✎ {a.name}
+                      </button>
+                    ) : (
+                      <button key={a.id} className="chip" onClick={() => appendAction(s, a.id)}>
+                        {a.name}
+                        {(a.button ?? resolveButtonForAction(a.name, buttonMap)) && (
+                          <span className="btn-label">
+                            {a.button ?? resolveButtonForAction(a.name, buttonMap)}
+                          </span>
+                        )}
+                      </button>
+                    ),
+                  )}
+                  <div className="palette-utilities">
+                    <button className="chip add-chip" onClick={() => addCustomAction(ch)}>
+                      ＋ 技を追加
+                    </button>
+                    <button
+                      className={`chip add-chip ${organizing ? 'selected' : ''}`}
+                      onClick={() => setOrganizing(!organizing)}
+                    >
+                      {organizing ? '完了' : '技の整理'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {active && (
+                <input
+                  className="memo-input"
+                  placeholder="この行のポイント（※〜）"
+                  value={s.note ?? ''}
+                  onChange={(e) => setStep({ ...s, note: e.target.value })}
+                />
+              )}
+            </div>
+          </SortableItem>
         )
       })}
 
@@ -730,7 +1021,157 @@ function ComboEditor({
           ローテーションを削除
         </button>
       </div>
+
+      <ReferenceLinksEditor
+        urls={combo.referenceUrls ?? []}
+        onChange={(referenceUrls) =>
+          onChange({
+            ...combo,
+            referenceUrls: referenceUrls.length > 0 ? referenceUrls : undefined,
+          })
+        }
+      />
     </div>
+  )
+}
+
+function normalizeReferenceUrl(value: string): string | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+  try {
+    const parsed = new URL(candidate)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
+    return parsed.href
+  } catch {
+    return null
+  }
+}
+
+function referenceSource(url: string): string {
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./, '')
+    if (hostname === 'youtu.be' || hostname.endsWith('youtube.com')) return 'YouTube'
+    if (hostname === 'x.com' || hostname.endsWith('twitter.com')) return 'X / Twitter'
+    return hostname
+  } catch {
+    return '参考リンク'
+  }
+}
+
+function ReferenceLinks({ urls }: { urls: string[] }) {
+  return (
+    <section className="card reference-card reference-card-view">
+      <div className="reference-heading">
+        <span className="page-kicker">参考動画</span>
+        <span className="reference-count">{urls.length}件</span>
+      </div>
+      <div className="reference-list">
+        {urls.map((url) => (
+          <a
+            key={url}
+            className="reference-link"
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span className="reference-source">{referenceSource(url)}</span>
+            <span className="reference-url">{url}</span>
+            <span className="reference-open" aria-hidden="true">
+              ↗
+            </span>
+          </a>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ReferenceLinksEditor({
+  urls,
+  onChange,
+}: {
+  urls: string[]
+  onChange: (urls: string[]) => void
+}) {
+  const [draft, setDraft] = useState('')
+
+  const add = (event: ReactFormEvent) => {
+    event.preventDefault()
+    const normalized = normalizeReferenceUrl(draft)
+    if (!normalized) {
+      alert('YouTubeやXなどの有効なURLを入力してください')
+      return
+    }
+    if (urls.includes(normalized)) {
+      alert('同じURLがすでに登録されています')
+      return
+    }
+    if (urls.length >= 20) {
+      alert('参考動画は20件まで登録できます')
+      return
+    }
+    onChange([...urls, normalized])
+    setDraft('')
+  }
+
+  return (
+    <section className="card reference-card">
+      <div className="reference-heading">
+        <div>
+          <span className="page-kicker">参考動画</span>
+          <p className="reference-description">YouTubeやXなど、参考にした動画のURL</p>
+        </div>
+        {urls.length > 0 && <span className="reference-count">{urls.length}件</span>}
+      </div>
+
+      {urls.length === 0 ? (
+        <p className="reference-empty">URLを追加すると、ここからすぐに動画を開けます</p>
+      ) : (
+        <div className="reference-list">
+          {urls.map((url) => (
+            <div key={url} className="reference-edit-row">
+              <a
+                className="reference-link"
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="reference-source">{referenceSource(url)}</span>
+                <span className="reference-url">{url}</span>
+                <span className="reference-open" aria-hidden="true">
+                  ↗
+                </span>
+              </a>
+              <button
+                className="icon-btn reference-remove"
+                onClick={() => onChange(urls.filter((item) => item !== url))}
+                aria-label={`${referenceSource(url)}の参考URLを削除`}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <form className="reference-add" onSubmit={add}>
+        <input
+          type="url"
+          inputMode="url"
+          autoCapitalize="none"
+          autoCorrect="off"
+          maxLength={2048}
+          placeholder="https://youtube.com/..."
+          aria-label="参考動画のURL"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+        />
+        <button className="primary" type="submit" disabled={!draft.trim()}>
+          追加
+        </button>
+      </form>
+    </section>
   )
 }
 

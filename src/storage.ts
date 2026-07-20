@@ -19,6 +19,8 @@ const MAX_PARTIES = 2_000
 const MAX_COMBOS = 5_000
 const MAX_STEPS_PER_COMBO = 10_000
 const MAX_ACTIONS_PER_STEP = 1_000
+const MAX_REFERENCE_URLS = 20
+const MAX_REFERENCE_URL_LENGTH = 2_048
 const MAX_BUTTON_MAP_ENTRIES = 1_000
 const ACTION_KINDS = new Set<ActionKind>([
   'normal',
@@ -113,11 +115,23 @@ function isComboStep(value: unknown): value is ComboStep {
 
 function isCombo(value: unknown): value is Combo {
   if (!isRecord(value)) return false
+  const referenceUrls = value.referenceUrls
   return (
     typeof value.id === 'string' &&
     typeof value.partyId === 'string' &&
     typeof value.title === 'string' &&
     isOptionalString(value.memo) &&
+    (referenceUrls === undefined ||
+      (isStringArray(referenceUrls, MAX_REFERENCE_URLS) &&
+        referenceUrls.every((url) => {
+          if (url.length > MAX_REFERENCE_URL_LENGTH) return false
+          try {
+            const parsed = new URL(url)
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+          } catch {
+            return false
+          }
+        }))) &&
     Array.isArray(value.steps) &&
     value.steps.length <= MAX_STEPS_PER_COMBO &&
     value.steps.every(isComboStep) &&
