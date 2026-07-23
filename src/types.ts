@@ -9,6 +9,10 @@ export type ActionKind =
   | 'move' // 回避・ジャンプ・落下など
   | 'special' // キャラ固有技
 
+export type AppTheme = 'dark' | 'light' | 'cream'
+
+export type ComboCardTone = '焦熱' | '凝縮' | '電導' | '気動' | '回折' | '消滅'
+
 export interface CharacterAction {
   id: string
   name: string
@@ -67,6 +71,10 @@ export interface Combo {
   title: string
   /** 一覧で絞り込むためのお気に入り */
   favorite?: boolean
+  /** 一覧カードへ付ける属性色 */
+  cardTone?: ComboCardTone
+  /** コマンド表示の倍率（0.6〜1.2） */
+  commandScale?: number
   memo?: string
   /** 参考にした動画・投稿のURL（最大20件） */
   referenceUrls?: string[]
@@ -76,6 +84,8 @@ export interface Combo {
 
 export interface AppData {
   version: 1
+  /** 端末で使用する配色 */
+  theme?: AppTheme
   characters: Character[]
   parties: Party[]
   combos: Combo[]

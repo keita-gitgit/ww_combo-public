@@ -34,13 +34,26 @@ function TabIcon({ id }: { id: Tab }) {
 export default function App() {
   const [data, setData] = useState<AppData>(() => loadData())
   const [tab, setTab] = useState<Tab>('rotation')
+  const theme = data.theme ?? 'dark'
 
   useEffect(() => {
     saveData(data)
   }, [data])
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    const themeColor = theme === 'dark' ? '#101112' : theme === 'light' ? '#f5f6f7' : '#f4efe5'
+    document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute(
+      'content',
+      themeColor,
+    )
+    document
+      .querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-status-bar-style"]')
+      ?.setAttribute('content', theme === 'dark' ? 'black-translucent' : 'default')
+  }, [theme])
+
   return (
-    <div className="app">
+    <div className="app" data-theme={theme}>
       <main className="app-main">
         {tab === 'rotation' && <RotationPage data={data} setData={setData} />}
         {tab === 'settings' && <SettingsPage data={data} setData={setData} />}

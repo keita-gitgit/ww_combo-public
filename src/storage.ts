@@ -1,9 +1,11 @@
 import type {
   ActionKind,
+  AppTheme,
   AppData,
   Character,
   CharacterAction,
   Combo,
+  ComboCardTone,
   ComboAction,
   ComboStep,
   Party,
@@ -32,6 +34,15 @@ const ACTION_KINDS = new Set<ActionKind>([
   'move',
   'special',
 ])
+const APP_THEMES = new Set<AppTheme>(['dark', 'light', 'cream'])
+const COMBO_CARD_TONES = new Set<ComboCardTone>([
+  '焦熱',
+  '凝縮',
+  '電導',
+  '気動',
+  '回折',
+  '消滅',
+])
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -43,6 +54,24 @@ function isOptionalString(value: unknown): value is string | undefined {
 
 function isOptionalBoolean(value: unknown): value is boolean | undefined {
   return value === undefined || typeof value === 'boolean'
+}
+
+function isOptionalTheme(value: unknown): value is AppTheme | undefined {
+  return value === undefined || (typeof value === 'string' && APP_THEMES.has(value as AppTheme))
+}
+
+function isOptionalCardTone(value: unknown): value is ComboCardTone | undefined {
+  return (
+    value === undefined ||
+    (typeof value === 'string' && COMBO_CARD_TONES.has(value as ComboCardTone))
+  )
+}
+
+function isOptionalCommandScale(value: unknown): value is number | undefined {
+  return (
+    value === undefined ||
+    (typeof value === 'number' && Number.isFinite(value) && value >= 0.6 && value <= 1.2)
+  )
 }
 
 function isStringArray(value: unknown, maxLength: number): value is string[] {
@@ -121,6 +150,8 @@ function isCombo(value: unknown): value is Combo {
     typeof value.partyId === 'string' &&
     typeof value.title === 'string' &&
     isOptionalBoolean(value.favorite) &&
+    isOptionalCardTone(value.cardTone) &&
+    isOptionalCommandScale(value.commandScale) &&
     isOptionalString(value.memo) &&
     (referenceUrls === undefined ||
       (isStringArray(referenceUrls, MAX_REFERENCE_URLS) &&
@@ -153,6 +184,7 @@ function isButtonMap(value: unknown): value is Record<string, string> | undefine
 function isAppData(value: unknown): value is AppData {
   if (!isRecord(value) || value.version !== 1) return false
   return (
+    isOptionalTheme(value.theme) &&
     Array.isArray(value.characters) &&
     value.characters.length <= MAX_CHARACTERS &&
     value.characters.every(isCharacter) &&

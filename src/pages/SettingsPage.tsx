@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import type { AppData } from '../types'
 import { exportData, MAX_IMPORT_BYTES, parseImportedData } from '../storage'
 import { makeSeedData, DEFAULT_BUTTON_MAP } from '../seed'
+import type { AppTheme } from '../types'
 
 interface Props {
   data: AppData
@@ -16,6 +17,11 @@ const BUTTON_GROUPS = [
 ] as const
 
 const CUSTOM_BUTTON_VALUE = '__custom__'
+const THEME_OPTIONS: Array<{ id: AppTheme; label: string; description: string }> = [
+  { id: 'dark', label: 'ダーク', description: '墨色' },
+  { id: 'light', label: 'ライト', description: '白' },
+  { id: 'cream', label: 'クリーム', description: '生成り' },
+]
 
 function normalizeButtonParts(parts: string[]): string[] {
   const unique = parts.filter((part, index) => part && parts.indexOf(part) === index)
@@ -167,6 +173,26 @@ export default function SettingsPage({ data, setData }: Props) {
           <h1>設定</h1>
         </div>
       </header>
+
+      <div className="card appearance-card">
+        <h3>外観</h3>
+        <div className="theme-options" role="group" aria-label="配色">
+          {THEME_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              className={`theme-option ${(data.theme ?? 'dark') === option.id ? 'active' : ''}`}
+              onClick={() => setData({ ...data, theme: option.id })}
+              aria-pressed={(data.theme ?? 'dark') === option.id}
+            >
+              <span className={`theme-swatch ${option.id}`} aria-hidden="true" />
+              <span className="theme-option-copy">
+                <span>{option.label}</span>
+                <small>{option.description}</small>
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="card">
         <h3>PS5ボタン設定</h3>

@@ -6,7 +6,14 @@ import type {
   PointerEvent as ReactPointerEvent,
   ReactNode,
 } from 'react'
-import type { AppData, Character, Combo, ComboAction, ComboStep } from '../types'
+import type {
+  AppData,
+  Character,
+  Combo,
+  ComboAction,
+  ComboCardTone,
+  ComboStep,
+} from '../types'
 import { newId } from '../types'
 import { resolveButtonForAction } from '../seed'
 import Avatar from '../components/Avatar'
@@ -18,6 +25,18 @@ interface Props {
 
 const LONG_PRESS_MS = 450
 const SORT_CLICK_GUARD_MS = 500
+const COMMAND_SCALE_MIN = 0.6
+const COMMAND_SCALE_MAX = 1.2
+const COMMAND_SCALE_STEP = 0.1
+const CARD_TONE_OPTIONS: Array<{ value: '' | ComboCardTone; label: string }> = [
+  { value: '', label: '標準' },
+  { value: '焦熱', label: '焦熱・赤' },
+  { value: '凝縮', label: '凝縮・青' },
+  { value: '電導', label: '電導・紫' },
+  { value: '気動', label: '気動・緑' },
+  { value: '回折', label: '回折・金' },
+  { value: '消滅', label: '消滅・暗紫' },
+]
 
 let sortClickGuardUntil = 0
 
@@ -27,6 +46,16 @@ function guardClicksAfterSort() {
 
 function isSortClickGuarded(): boolean {
   return Date.now() < sortClickGuardUntil
+}
+
+function actionNoteNumber(actions: ComboAction[], actionId: string): number | undefined {
+  let number = 0
+  for (const action of actions) {
+    if (!action.note) continue
+    number += 1
+    if (action.id === actionId) return number
+  }
+  return undefined
 }
 
 function moveItemTo<T extends { id: string }>(items: T[], sourceId: string, targetId: string): T[] {
@@ -667,6 +696,7 @@ function SwipeableComboCard({
         className={`card row-card with-avatar swipe-card ${dragging ? 'dragging' : ''} ${sort.sorting ? 'sorting' : ''}`}
         data-sort-id={combo.id}
         data-sort-group="combos"
+        data-card-tone={combo.cardTone}
         style={{ transform: cardTransform }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -993,6 +1023,18 @@ function ComboEditor({
     return def?.button ?? (def ? resolveButtonForAction(def.name, buttonMap) : undefined)
   }
 
+  const commandScale = combo.commandScale ?? 1
+  const changeCommandScale = (delta: number) => {
+    const next = Math.min(
+      COMMAND_SCALE_MAX,
+      Math.max(COMMAND_SCALE_MIN, Math.round((commandScale + delta) * 10) / 10),
+    )
+    onChange({
+      ...combo,
+      commandScale: next === 1 ? undefined : next,
+    })
+  }
+
   if (changingMembers) {
     return (
       <MemberPicker
@@ -1038,66 +1080,113 @@ function ComboEditor({
             コマンド
           </button>
         </div>
-        <h1 className="view-title">{combo.title}</h1>
-        <div className="view-steps">
-          {combo.steps.map((s) => {
-            const ch = charOf(s.characterId)
-            // ポイント: 行のポイント + 技ごとのポイント
-            const points = [
-              ...(s.note ? [s.note] : []),
-              ...s.actions
-                .filter((a) => a.note)
-                .map((a) => {
-                  const name = ch?.actions.find((x) => x.id === a.actionId)?.name ?? '?'
-                  return `${name}: ${a.note}`
-                }),
-            ]
-            return (
-              <div key={s.id} className="view-step">
-                <div className="view-line">
-                  <span className={`view-char ${slotClass(s.characterId)}`}>
-                    <Avatar character={ch} size={32} />
-                    {ch?.name}
-                  </span>
-                  {command ? (
-                    <span className="view-actions command-seq">
-                      {s.actions.map((a, i) => (
-                        <span key={a.id} className="cmd-pair">
-                          {i > 0 && <span className="cmd-arrow">→</span>}
-                          <span className="cmd-btn">
-                            {buttonOf(a, ch) ??
-                              ch?.actions.find((x) => x.id === a.actionId)?.name ??
-                              '?'}
+        {command && (
+          <div className="command-size-control" role="group" aria-label="コマンド表示サイズ">
+            <button
+              onClick={() => changeCommandScale(-COMMAND_SCALE_STEP)}
+              disabled={commandScale <= COMMAND_SCALE_MIN}
+              aria-label="コマンド表示を小さくする"
+            >
+              −
+            </button>
+            <output aria-live="polite">{Math.round(commandScale * 100)}%</output>
+            <button
+              onClick={() => changeCommandScale(COMMAND_SCALE_STEP)}
+              disabled={commandScale >= COMMAND_SCALE_MAX}
+              aria-label="コマンド表示を大きくする"
+            >
+              ＋
+            </button>
+          </div>
+        )}
+        <div
+          className={command ? 'command-content' : undefined}
+          style={
+            command
+              ? ({ '--command-scale': commandScale } as CSSProperties)
+              : undefined
+          }
+        >
+          <h1 className="view-title">{combo.title}</h1>
+          <div className="view-steps">
+            {combo.steps.map((s) => {
+              const ch = charOf(s.characterId)
+              const numberedActionNotes = s.actions
+                .filter((action) => action.note)
+                .map((action, index) => {
+                  const name = ch?.actions.find((item) => item.id === action.actionId)?.name ?? '?'
+                  return {
+                    id: action.id,
+                    number: index + 1,
+                    text: `${name}: ${action.note}`,
+                  }
+                })
+              return (
+                <div key={s.id} className="view-step">
+                  <div className="view-line">
+                    <span className={`view-char ${slotClass(s.characterId)}`}>
+                      <Avatar character={ch} size={32} />
+                      {ch?.name}
+                    </span>
+                    {command ? (
+                      <span className="view-actions command-seq">
+                        {s.actions.map((a, i) => (
+                          <span key={a.id} className="cmd-pair">
+                            {i > 0 && <span className="cmd-arrow">→</span>}
+                            <span className="cmd-btn">
+                              {buttonOf(a, ch) ??
+                                ch?.actions.find((x) => x.id === a.actionId)?.name ??
+                                '?'}
+                            </span>
                           </span>
-                        </span>
+                        ))}
+                      </span>
+                    ) : (
+                      <span className="view-actions">
+                        {s.actions.map((a, i) => (
+                          <Fragment key={a.id}>
+                            {i > 0 && <span className="view-sep"> / </span>}
+                            <ActionText
+                              action={a}
+                              character={ch}
+                              buttonMap={buttonMap}
+                              noteNumber={actionNoteNumber(s.actions, a.id)}
+                            />
+                          </Fragment>
+                        ))}
+                      </span>
+                    )}
+                  </div>
+                  {!command && (Boolean(s.note) || numberedActionNotes.length > 0) && (
+                    <div className="view-points">
+                      {s.note && (
+                        <div className="view-note">
+                          <span className="note-reference">※</span> {s.note}
+                        </div>
+                      )}
+                      {numberedActionNotes.map((point) => (
+                        <div key={point.id} className="view-note">
+                          <span className="note-reference">
+                            ※<sup>{point.number}</sup>
+                          </span>{' '}
+                          {point.text}
+                        </div>
                       ))}
-                    </span>
-                  ) : (
-                    <span className="view-actions">
-                      {s.actions.map((a, i) => (
-                        <Fragment key={a.id}>
-                          {i > 0 && <span className="view-sep"> / </span>}
-                          <ActionText action={a} character={ch} buttonMap={buttonMap} />
-                        </Fragment>
-                      ))}
-                    </span>
+                    </div>
                   )}
                 </div>
-                {!command && points.length > 0 && (
-                  <div className="view-points">
-                    {points.map((p, i) => (
-                      <div key={i} className="view-note">
-                        ※ {p}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
         {(combo.referenceUrls?.length ?? 0) > 0 && (
           <ReferenceLinks urls={combo.referenceUrls ?? []} />
+        )}
+        {combo.memo && (
+          <section className="card combo-memo-card combo-memo-view">
+            <span className="page-kicker">メモ</span>
+            <p>{combo.memo}</p>
+          </section>
         )}
       </div>
     )
@@ -1123,6 +1212,28 @@ function ComboEditor({
           value={combo.title}
           onChange={(e) => onChange({ ...combo, title: e.target.value })}
         />
+        <label className="combo-tone-field">
+          <span>一覧カードの色</span>
+          <select
+            aria-label="ローテーションカードの色"
+            value={combo.cardTone ?? ''}
+            onChange={(event) => {
+              const cardTone = event.target.value as '' | ComboCardTone
+              onChange({ ...combo, cardTone: cardTone || undefined })
+            }}
+          >
+            {CARD_TONE_OPTIONS.map((option) => (
+              <option key={option.value || 'default'} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <span
+            className="combo-tone-swatch"
+            data-card-tone={combo.cardTone}
+            aria-hidden="true"
+          />
+        </label>
       </section>
 
       {combo.steps.map((s, si) => {
@@ -1216,7 +1327,12 @@ function ComboEditor({
                         setActiveActionId(activeActionId === a.id ? null : a.id)
                       }}
                     >
-                      <ActionText action={a} character={ch} buttonMap={buttonMap} />
+                      <ActionText
+                        action={a}
+                        character={ch}
+                        buttonMap={buttonMap}
+                        noteNumber={actionNoteNumber(s.actions, a.id)}
+                      />
                     </button>
                   </SortableItem>
                 ))}
@@ -1342,6 +1458,23 @@ function ComboEditor({
           })
         }
       />
+
+      <section className="card combo-memo-card">
+        <span className="page-kicker">メモ</span>
+        <textarea
+          className="combo-memo-input"
+          aria-label="ローテーションのメモ"
+          placeholder="ローテーション全体のメモ"
+          maxLength={10000}
+          value={combo.memo ?? ''}
+          onChange={(event) =>
+            onChange({
+              ...combo,
+              memo: event.target.value || undefined,
+            })
+          }
+        />
+      </section>
     </div>
   )
 }
@@ -1490,10 +1623,12 @@ function ActionText({
   action,
   character,
   buttonMap,
+  noteNumber,
 }: {
   action: ComboAction
   character?: Character
   buttonMap: Record<string, string>
+  noteNumber?: number
 }) {
   const def = character?.actions.find((x) => x.id === action.actionId)
   // 優先順: キャラ技の設定 > 共通ボタン対応表
@@ -1502,7 +1637,11 @@ function ActionText({
     <span>
       {def?.name ?? '?'}
       {button && <span className="btn-label">[{button}]</span>}
-      {action.note && <span className="note-mark">※</span>}
+      {action.note && (
+        <span className="note-mark">
+          ※{noteNumber && <sup>{noteNumber}</sup>}
+        </span>
+      )}
     </span>
   )
 }
