@@ -626,11 +626,11 @@ export function getLegacyCharacterActionTemplate(name: string): ActionTemplate[]
 // 全キャラ共通の初期技。通常攻撃は最大5段まで最初から用意し、
 // 強化状態・特殊派生は利用者が必要に応じて自分の呼び方で登録する。
 export const SIMPLE_ACTION_TEMPLATE: ActionTemplate[] = [
-  { name: '通常攻撃1', kind: 'normal' },
-  { name: '通常攻撃2', kind: 'normal' },
-  { name: '通常攻撃3', kind: 'normal' },
-  { name: '通常攻撃4', kind: 'normal' },
-  { name: '通常攻撃5', kind: 'normal' },
+  { name: '通常1', kind: 'normal' },
+  { name: '通常2', kind: 'normal' },
+  { name: '通常3', kind: 'normal' },
+  { name: '通常4', kind: 'normal' },
+  { name: '通常5', kind: 'normal' },
   { name: '共鳴スキル', kind: 'skill' },
   { name: '重撃', kind: 'normal' },
   { name: '空中攻撃', kind: 'normal' },

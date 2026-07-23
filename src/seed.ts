@@ -74,14 +74,14 @@ export function makeCharacterFromRoster(entry: RosterEntry): Character {
 }
 
 const LEGACY_COMMON_ACTION_NAMES = new Map<string, string>([
-  ['通常攻撃', '通常攻撃1'],
-  ['通常', '通常攻撃1'],
-  ['通常1', '通常攻撃1'],
-  ['通常2', '通常攻撃1'],
-  ['通常3', '通常攻撃1'],
-  ['通常4', '通常攻撃1'],
-  ['通常5', '通常攻撃1'],
-  ['強化通常', '通常攻撃1'],
+  ['通常攻撃', '通常1'],
+  ['通常攻撃1', '通常1'],
+  ['通常攻撃2', '通常2'],
+  ['通常攻撃3', '通常3'],
+  ['通常攻撃4', '通常4'],
+  ['通常攻撃5', '通常5'],
+  ['通常', '通常1'],
+  ['強化通常', '通常1'],
   ['スキル', '共鳴スキル'],
   ['強化スキル', '共鳴スキル'],
   ['重撃', '重撃'],
@@ -111,7 +111,10 @@ function canonicalNameForLegacyAction(action: ActionTemplate): string {
   if (detailedName.includes('回避')) return '回避'
   if (/(空中|崩れ落ち)/.test(detailedName)) return '空中攻撃'
   if (detailedName.includes('重撃')) return '重撃'
-  if (/(通常|照準)/.test(detailedName) || action.kind === 'normal') return '通常攻撃1'
+  if (/(通常|照準)/.test(detailedName) || action.kind === 'normal') {
+    const sequence = detailedName.replace(/通常攻撃/g, '通常').match(/通常.*?([1-5])$/)?.[1]
+    return `通常${sequence ?? '1'}`
+  }
   return '共鳴スキル'
 }
 
@@ -294,7 +297,7 @@ export function makeSeedData(): AppData {
         id: newId(),
         characterId: phrolova.id,
         actions: [
-          { id: newId(), actionId: find(phrolova, '通常攻撃1'), note: '自然発生' },
+          { id: newId(), actionId: find(phrolova, '通常1'), note: '自然発生' },
           { id: newId(), actionId: find(phrolova, '重撃'), note: '自然発生' },
         ],
         note: '時間に少し余裕あり。ヘカテーを投げて倒れこむモーション',
@@ -303,7 +306,7 @@ export function makeSeedData(): AppData {
         id: newId(),
         characterId: chisa.id,
         actions: [
-          { id: newId(), actionId: find(chisa, '通常攻撃1'), note: '自然発生' },
+          { id: newId(), actionId: find(chisa, '通常1'), note: '自然発生' },
           { id: newId(), actionId: find(chisa, '共鳴スキル') },
           { id: newId(), actionId: find(chisa, '共鳴解放') },
           { id: newId(), actionId: find(chisa, '重撃'), button: 'R2+△' },
@@ -314,7 +317,7 @@ export function makeSeedData(): AppData {
         id: newId(),
         characterId: phrolova.id,
         actions: [
-          { id: newId(), actionId: find(phrolova, '通常攻撃1'), button: '○' },
+          { id: newId(), actionId: find(phrolova, '通常1'), button: '○' },
           { id: newId(), actionId: find(phrolova, '共鳴スキル'), button: 'R2' },
           { id: newId(), actionId: find(phrolova, '音骸'), button: 'L2+□' },
         ],
