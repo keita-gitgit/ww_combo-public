@@ -99,6 +99,7 @@ function useLongPressSort({
     if (event.button !== 0) return
     const target = event.target as HTMLElement
     if (!target.closest('[data-sort-handle]') || target.closest('[data-sort-ignore]')) return
+    if (target.closest('[data-sort-id]') !== event.currentTarget) return
 
     clearPressTimer()
     startPoint.current = { x: event.clientX, y: event.clientY }
@@ -388,12 +389,9 @@ export default function RotationPage({ data, setData }: Props) {
 
       {data.combos.length === 0 && (
         <button className="empty empty-action" onClick={() => setCreating(true)}>
-          「＋ 作成」からキャラを選んで、ローテーションの記録を始めましょう
-          <span className="empty-action-label">タップして作成 →</span>
+          保存したローテーションはありません
+          <span className="empty-action-label">作成する</span>
         </button>
-      )}
-      {data.combos.length > 1 && (
-        <p className="sort-hint list-sort-hint">カード右端の⠿を長押しして並べ替え</p>
       )}
       {data.combos.map((c) => {
         const party = data.parties.find((p) => p.id === c.partyId)
@@ -537,7 +535,7 @@ function SwipeableComboCard({
           if (open) onSwipeClose()
           else onOpen()
         }}
-        aria-label={`${combo.title}。長押しで並べ替え、左へスワイプすると削除できます`}
+        aria-label={combo.title}
       >
         <span className="avatar-stack">
           {members.map((member) => (
@@ -764,8 +762,27 @@ function ComboEditor({
     setStep({ ...step, actions: [...step.actions, { id: newId(), actionId }] })
   }
 
+  const chooseAction = (step: ComboStep, actionId: string) => {
+    if (!activeActionId) {
+      appendAction(step, actionId)
+      return
+    }
+    setStep({
+      ...step,
+      actions: step.actions.map((action) =>
+        action.id === activeActionId ? { ...action, actionId } : action,
+      ),
+    })
+    setActiveActionId(null)
+  }
+
+  const reorderAction = (step: ComboStep, sourceId: string, targetId: string) => {
+    const actions = moveItemTo(step.actions, sourceId, targetId)
+    if (actions !== step.actions) setStep({ ...step, actions })
+  }
+
   const addCustomAction = (ch: Character) => {
-    const name = prompt(`${ch.name} の技の名前（例: ハサミ1、チェンソー）`)?.trim()
+    const name = prompt(`${ch.name}の技名`)?.trim()
     if (name) onAddCharacterAction(ch.id, name)
   }
 
@@ -874,10 +891,6 @@ function ComboEditor({
         />
       </section>
 
-      {combo.steps.length > 1 && (
-        <p className="sort-hint">キャラ名または⠿を長押しして並べ替え</p>
-      )}
-
       {combo.steps.map((s, si) => {
         const ch = charOf(s.characterId)
         const active = activeStepId === s.id
@@ -911,7 +924,7 @@ function ComboEditor({
                       ステップ {si + 1}・
                       {active
                         ? '技パレットを表示中'
-                        : `${s.actions.length}アクション・長押しで移動`}
+                        : `${s.actions.length}アクション`}
                     </span>
                   </span>
                 </button>
@@ -942,12 +955,20 @@ function ComboEditor({
               </div>
 
               <div className="step-actions">
-                {s.actions.length === 0 && <span className="hint">技をタップして追加 →</span>}
+                {s.actions.length === 0 && <span className="hint">技なし</span>}
                 {s.actions.map((a, i) => (
-                  <Fragment key={a.id}>
+                  <SortableItem
+                    key={a.id}
+                    id={a.id}
+                    group={`actions-${s.id}`}
+                    onMove={(sourceId, targetId) => reorderAction(s, sourceId, targetId)}
+                    onSortStart={() => setActiveActionId(null)}
+                    className="action-sortable"
+                  >
                     {i > 0 && <span className="view-sep">→</span>}
                     <button
                       className={`action-chip ${activeActionId === a.id ? 'editing' : ''}`}
+                      data-sort-handle
                       onClick={(e) => {
                         e.stopPropagation()
                         setActiveStepId(s.id)
@@ -956,7 +977,7 @@ function ComboEditor({
                     >
                       <ActionText action={a} character={ch} buttonMap={buttonMap} />
                     </button>
-                  </Fragment>
+                  </SortableItem>
                 ))}
               </div>
 
@@ -969,16 +990,14 @@ function ComboEditor({
                 />
               )}
 
-              {active && !activeActionId && ch && (
+              {active && ch && (
                 <div className="palette">
                   <div className="palette-heading">
-                    <span>技をタップして追加</span>
-                    <span className="live-state">編集中</span>
+                    <span>技パレット</span>
+                    <span className="live-state">{activeActionId ? '差し替え' : '追加'}</span>
                   </div>
                   {organizing && (
-                    <div className="hint organize-hint">
-                      技をタップして名前を変更（空にすると削除）
-                    </div>
+                    <div className="hint organize-hint">技名の編集・削除</div>
                   )}
                   {ch.actions.map((a) =>
                     organizing ? (
@@ -986,7 +1005,7 @@ function ComboEditor({
                         key={a.id}
                         className="chip organize"
                         onClick={() => {
-                          const v = prompt('技名を編集（空にすると削除）', a.name)
+                          const v = prompt('技名', a.name)
                           if (v === null) return
                           if (v.trim() === '') onDeleteCharacterAction(ch.id, a.id)
                           else onRenameCharacterAction(ch.id, a.id, v.trim())
@@ -995,7 +1014,7 @@ function ComboEditor({
                         ✎ {a.name}
                       </button>
                     ) : (
-                      <button key={a.id} className="chip" onClick={() => appendAction(s, a.id)}>
+                      <button key={a.id} className="chip" onClick={() => chooseAction(s, a.id)}>
                         {a.name}
                         {(a.button ?? resolveButtonForAction(a.name, buttonMap)) && (
                           <span className="btn-label">
@@ -1011,7 +1030,10 @@ function ComboEditor({
                     </button>
                     <button
                       className={`chip add-chip ${organizing ? 'selected' : ''}`}
-                      onClick={() => setOrganizing(!organizing)}
+                      onClick={() => {
+                        setOrganizing(!organizing)
+                        setActiveActionId(null)
+                      }}
                     >
                       {organizing ? '完了' : '技の整理'}
                     </button>
@@ -1033,7 +1055,7 @@ function ComboEditor({
       })}
 
       <div className="card add-step-card">
-        <div className="hint">行を追加：キャラを選択</div>
+        <div className="hint">行を追加</div>
         <div className="chip-grid">
           {members.map((c) => (
             <button
@@ -1159,7 +1181,7 @@ function ReferenceLinksEditor({
       </div>
 
       {urls.length === 0 ? (
-        <p className="reference-empty">URLを追加すると、ここからすぐに動画を開けます</p>
+        <p className="reference-empty">参考動画なし</p>
       ) : (
         <div className="reference-list">
           {urls.map((url) => (
@@ -1255,7 +1277,7 @@ function ActionDetailEditor({
     <div className="detail-editor">
       <div className="detail-row">
         <input
-          placeholder="この技のポイント（例: 自然発生、敵に当てる）"
+          placeholder="この技のポイント"
           value={action.note ?? ''}
           onChange={(e) => set({ ...action, note: e.target.value })}
         />

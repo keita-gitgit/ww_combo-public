@@ -521,7 +521,7 @@ const ACTION_KIND_ORDER: ActionKind[] = [
   'move',
 ]
 
-// 旧版で表示していたキャラ別の詳細技名。保存済みデータを11個の基本技へ
+// 旧版で表示していたキャラ別の詳細技名。保存済みデータを基本技へ
 // 安全に移行するためにだけ使用し、新規の技パレットには表示しない。
 export function getLegacyCharacterActionTemplate(name: string): ActionTemplate[] {
   const groups = CHARACTER_ACTION_GROUPS[name]
@@ -623,10 +623,14 @@ export function getLegacyCharacterActionTemplate(name: string): ActionTemplate[]
   })
 }
 
-// 全キャラ共通の初期技。段数・強化状態・特殊派生は、利用者が必要に応じて
-// 「技を追加」「技の整理」から自分の呼び方で登録する。
+// 全キャラ共通の初期技。通常攻撃は最大5段まで最初から用意し、
+// 強化状態・特殊派生は利用者が必要に応じて自分の呼び方で登録する。
 export const SIMPLE_ACTION_TEMPLATE: ActionTemplate[] = [
-  { name: '通常攻撃', kind: 'normal' },
+  { name: '通常攻撃1', kind: 'normal' },
+  { name: '通常攻撃2', kind: 'normal' },
+  { name: '通常攻撃3', kind: 'normal' },
+  { name: '通常攻撃4', kind: 'normal' },
+  { name: '通常攻撃5', kind: 'normal' },
   { name: '共鳴スキル', kind: 'skill' },
   { name: '重撃', kind: 'normal' },
   { name: '空中攻撃', kind: 'normal' },

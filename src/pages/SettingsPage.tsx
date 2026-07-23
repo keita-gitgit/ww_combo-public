@@ -70,7 +70,7 @@ function ButtonBinding({
   const addPart = (selected: string) => {
     let part = selected
     if (selected === CUSTOM_BUTTON_VALUE) {
-      part = prompt('一覧にないボタン表記を入力してください')?.trim() ?? ''
+      part = prompt('ボタン表記')?.trim() ?? ''
     }
     if (!part) return
     onChange(formatButtonSetting([...parts, ...parseButtonSetting(part)]))
@@ -170,9 +170,6 @@ export default function SettingsPage({ data, setData }: Props) {
 
       <div className="card">
         <h3>PS5ボタン設定</h3>
-        <p className="hint">
-          プルダウンから使用するボタンを追加してください。複数選ぶと同時押しとして表示されます。選択済みのボタンをタップすると外せます。
-        </p>
         {Object.keys(DEFAULT_BUTTON_MAP).map((name) => (
           <div key={name} className="button-map-row">
             <span className="button-map-name">{name}</span>

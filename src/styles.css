@@ -489,17 +489,6 @@ body.sorting-active {
   box-shadow: 0 0 0 2px rgba(214, 168, 95, 0.26), var(--shadow-card);
 }
 
-.sort-hint {
-  margin: -4px 4px 9px;
-  color: var(--sub);
-  font-size: 0.75rem;
-  text-align: right;
-}
-
-.list-sort-hint {
-  margin-top: 0;
-}
-
 .card-title {
   font-size: 1rem;
   font-weight: 600;
@@ -828,6 +817,34 @@ body.sorting-active {
   align-items: center;
   gap: 5px;
   margin: 7px 0 0 43px;
+}
+
+.action-sortable {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.action-sortable .action-chip {
+  cursor: grab;
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+.action-sortable.sorting .action-chip {
+  border-color: rgba(214, 168, 95, 0.58);
+  background: var(--surface-raised);
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.46),
+    0 0 0 2px rgba(214, 168, 95, 0.18);
+  cursor: grabbing;
+  filter: brightness(1.06);
+  transform: none;
+}
+
+.action-sortable.sort-drop-target .action-chip {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(214, 168, 95, 0.24);
 }
 
 .action-chip {
