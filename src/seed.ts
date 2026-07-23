@@ -151,6 +151,7 @@ function syncCharacterActions(character: Character): CharacterActionSyncResult {
 
   const currentActions = Array.isArray(character.actions) ? character.actions : []
   const legacyActionNames = makeLegacyActionNameMap(character.name)
+  const canonicalTemplateNames = new Set(template.map((action) => action.name))
   const consumedActionIds = new Set<string>()
   const actionIdRedirects = new Map<string, string>()
   const actions: CharacterAction[] = []
@@ -162,7 +163,8 @@ function syncCharacterActions(character: Character): CharacterActionSyncResult {
       (action) =>
         !consumedActionIds.has(action.id) &&
         (action.name === actionTemplate.name ||
-          legacyActionNames.get(action.name) === actionTemplate.name),
+          (!canonicalTemplateNames.has(action.name) &&
+            legacyActionNames.get(action.name) === actionTemplate.name)),
     )
     const preferred =
       candidates.find((action) => action.name === actionTemplate.name) ?? candidates[0]
@@ -197,11 +199,27 @@ function syncCharacterActions(character: Character): CharacterActionSyncResult {
     actions.push(action)
   }
 
+  // 保存済みの並び順を優先する。移行で複数の旧技が1つにまとまった場合は、
+  // 最初に現れた位置へ統合し、新しく追加された基本技だけ末尾へ補完する。
+  const actionById = new Map(actions.map((action) => [action.id, action]))
+  const orderedActionIds: string[] = []
+  const orderedActionIdSet = new Set<string>()
+  for (const currentAction of currentActions) {
+    const resolvedId = actionIdRedirects.get(currentAction.id) ?? currentAction.id
+    if (!actionById.has(resolvedId) || orderedActionIdSet.has(resolvedId)) continue
+    orderedActionIds.push(resolvedId)
+    orderedActionIdSet.add(resolvedId)
+  }
+  const orderedActions = [
+    ...orderedActionIds.map((id) => actionById.get(id)!),
+    ...actions.filter((action) => !orderedActionIdSet.has(action.id)),
+  ]
+
   const changed =
-    actions.length !== currentActions.length ||
-    actions.some((action, index) => !sameAction(action, currentActions[index]))
+    orderedActions.length !== currentActions.length ||
+    orderedActions.some((action, index) => !sameAction(action, currentActions[index]))
   return {
-    character: changed ? { ...character, actions } : character,
+    character: changed ? { ...character, actions: orderedActions } : character,
     actionIdRedirects,
   }
 }

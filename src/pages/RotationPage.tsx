@@ -39,6 +39,35 @@ function moveItemTo<T extends { id: string }>(items: T[], sourceId: string, targ
   return next
 }
 
+function EditIcon() {
+  return (
+    <svg className="label-icon" viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M4 14.8V17h2.2L16.7 6.5 13.5 3.3 3 13.8Z" />
+      <path d="m11.9 4.9 3.2 3.2" />
+    </svg>
+  )
+}
+
+function CommandIcon() {
+  return (
+    <svg className="label-icon" viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M6.4 7.2h7.2a4.4 4.4 0 0 1 4.1 5.9l-.8 2.1a1.8 1.8 0 0 1-3 .6l-1.4-1.5h-5l-1.4 1.5a1.8 1.8 0 0 1-3-.6l-.8-2.1a4.4 4.4 0 0 1 4.1-5.9Z" />
+      <path d="M6.2 9.8v3M4.7 11.3h3M13.6 10.5h.1M15.2 12h.1" />
+    </svg>
+  )
+}
+
+function StarIcon({ filled = false }: { filled?: boolean }) {
+  return (
+    <svg className="star-icon" viewBox="0 0 20 20" aria-hidden="true">
+      <path
+        className={filled ? 'filled' : ''}
+        d="m10 2.7 2.2 4.5 5 .7-3.6 3.5.9 5-4.5-2.3-4.5 2.3.9-5-3.6-3.5 5-.7Z"
+      />
+    </svg>
+  )
+}
+
 function useLongPressSort({
   id,
   group,
@@ -263,6 +292,8 @@ export default function RotationPage({ data, setData }: Props) {
   const [selectedComboId, setSelectedComboId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [favoritesOnly, setFavoritesOnly] = useState(false)
 
   const combo = data.combos.find((c) => c.id === selectedComboId)
 
@@ -283,10 +314,8 @@ export default function RotationPage({ data, setData }: Props) {
     if (combos !== data.combos) setData({ ...data, combos })
   }
 
-  // キャラ選択からローテーション作成まで（同じ編成のパーティがあれば再利用）
-  const createComboWithMembers = (memberIds: string[]) => {
-    const sorted = [...memberIds].sort().join(',')
-    let party = data.parties.find((p) => [...p.memberIds].sort().join(',') === sorted)
+  const partyForMembers = (memberIds: string[]) => {
+    let party = data.parties.find((p) => p.memberIds.join(',') === memberIds.join(','))
     const parties = [...data.parties]
     if (!party) {
       const names = memberIds
@@ -295,6 +324,12 @@ export default function RotationPage({ data, setData }: Props) {
       party = { id: newId(), name: names, memberIds }
       parties.push(party)
     }
+    return { party, parties }
+  }
+
+  // キャラ選択からローテーション作成まで（同じ並びの編成があれば再利用）
+  const createComboWithMembers = (memberIds: string[]) => {
+    const { party, parties } = partyForMembers(memberIds)
     const c: Combo = {
       id: newId(),
       partyId: party.id,
@@ -305,6 +340,79 @@ export default function RotationPage({ data, setData }: Props) {
     setData({ ...data, parties, combos: [...data.combos, c] })
     setCreating(false)
     setSelectedComboId(c.id)
+  }
+
+  const changeComboMembers = (comboId: string, memberIds: string[]) => {
+    const target = data.combos.find((item) => item.id === comboId)
+    if (!target) return
+    const currentParty = data.parties.find((party) => party.id === target.partyId)
+    const removedIds = (currentParty?.memberIds ?? []).filter((id) => !memberIds.includes(id))
+    const removedInUse = removedIds.some((id) =>
+      target.steps.some((step) => step.characterId === id),
+    )
+    if (
+      removedInUse &&
+      !confirm('編成から外すキャラの行はローテーション内に残ります。このまま変更しますか？')
+    ) {
+      return
+    }
+    const { party, parties } = partyForMembers(memberIds)
+    setData({
+      ...data,
+      parties,
+      combos: data.combos.map((item) =>
+        item.id === comboId
+          ? { ...item, partyId: party.id, updatedAt: new Date().toISOString() }
+          : item,
+      ),
+    })
+  }
+
+  const duplicateCombo = (id: string) => {
+    const source = data.combos.find((item) => item.id === id)
+    if (!source) return
+    const duplicate: Combo = {
+      ...source,
+      id: newId(),
+      title: `${source.title}のコピー`,
+      favorite: false,
+      referenceUrls: source.referenceUrls ? [...source.referenceUrls] : undefined,
+      steps: source.steps.map((step) => ({
+        ...step,
+        id: newId(),
+        actions: step.actions.map((action) => ({ ...action, id: newId() })),
+      })),
+      updatedAt: new Date().toISOString(),
+    }
+    const sourceIndex = data.combos.findIndex((item) => item.id === id)
+    const combos = [...data.combos]
+    combos.splice(sourceIndex + 1, 0, duplicate)
+    setData({ ...data, combos })
+    setSelectedComboId(duplicate.id)
+  }
+
+  const toggleFavorite = (id: string) => {
+    setData({
+      ...data,
+      combos: data.combos.map((item) =>
+        item.id === id ? { ...item, favorite: !item.favorite } : item,
+      ),
+    })
+  }
+
+  const reorderCharacterAction = (
+    characterId: string,
+    sourceId: string,
+    targetId: string,
+  ) => {
+    setData({
+      ...data,
+      characters: data.characters.map((character) => {
+        if (character.id !== characterId) return character
+        const actions = moveItemTo(character.actions, sourceId, targetId)
+        return actions === character.actions ? character : { ...character, actions }
+      }),
+    })
   }
 
   // キャラに固有技を追加（コンボ編集の技パレットから使う）
@@ -358,9 +466,12 @@ export default function RotationPage({ data, setData }: Props) {
         onChange={updateCombo}
         onBack={() => setSelectedComboId(null)}
         onDelete={() => deleteCombo(combo.id)}
+        onDuplicate={() => duplicateCombo(combo.id)}
+        onChangeMembers={(memberIds) => changeComboMembers(combo.id, memberIds)}
         onAddCharacterAction={addCharacterAction}
         onRenameCharacterAction={renameCharacterAction}
         onDeleteCharacterAction={deleteCharacterAction}
+        onReorderCharacterAction={reorderCharacterAction}
       />
     )
   }
@@ -374,6 +485,17 @@ export default function RotationPage({ data, setData }: Props) {
       />
     )
   }
+
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase('ja')
+  const visibleCombos = data.combos.filter((item) => {
+    if (favoritesOnly && !item.favorite) return false
+    if (!normalizedQuery) return true
+    const party = data.parties.find((candidate) => candidate.id === item.partyId)
+    const memberNames = (party?.memberIds ?? [])
+      .map((id) => data.characters.find((character) => character.id === id)?.name ?? '')
+      .join(' ')
+    return `${item.title} ${memberNames}`.toLocaleLowerCase('ja').includes(normalizedQuery)
+  })
 
   return (
     <div className="page">
@@ -393,7 +515,29 @@ export default function RotationPage({ data, setData }: Props) {
           <span className="empty-action-label">作成する</span>
         </button>
       )}
-      {data.combos.map((c) => {
+      {data.combos.length > 0 && (
+        <div className="rotation-list-tools">
+          <input
+            className="rotation-search"
+            type="search"
+            placeholder="名前・キャラ名で検索"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+          />
+          <button
+            className={`favorite-filter ${favoritesOnly ? 'active' : ''}`}
+            onClick={() => setFavoritesOnly((current) => !current)}
+            aria-pressed={favoritesOnly}
+          >
+            <StarIcon filled={favoritesOnly} />
+            お気に入り
+          </button>
+        </div>
+      )}
+      {data.combos.length > 0 && visibleCombos.length === 0 && (
+        <div className="empty filter-result-empty">条件に合うローテーションはありません</div>
+      )}
+      {visibleCombos.map((c) => {
         const party = data.parties.find((p) => p.id === c.partyId)
         const members = (party?.memberIds ?? [])
           .map((id) => data.characters.find((x) => x.id === id))
@@ -411,6 +555,7 @@ export default function RotationPage({ data, setData }: Props) {
             onSwipeOpen={() => setOpenSwipeId(c.id)}
             onSwipeClose={() => setOpenSwipeId(null)}
             onDelete={() => deleteCombo(c.id)}
+            onToggleFavorite={() => toggleFavorite(c.id)}
             onReorder={reorderCombo}
           />
         )
@@ -429,6 +574,7 @@ function SwipeableComboCard({
   onSwipeOpen,
   onSwipeClose,
   onDelete,
+  onToggleFavorite,
   onReorder,
 }: {
   combo: Combo
@@ -438,6 +584,7 @@ function SwipeableComboCard({
   onSwipeOpen: () => void
   onSwipeClose: () => void
   onDelete: () => void
+  onToggleFavorite: () => void
   onReorder: (sourceId: string, targetId: string) => void
 }) {
   const [dragging, setDragging] = useState(false)
@@ -459,8 +606,9 @@ function SwipeableComboCard({
     },
   })
 
-  const handlePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return
+    if ((event.target as HTMLElement).closest('[data-card-action]')) return
     sort.handlePointerDown(event)
     const initialOffset = open ? -SWIPE_REVEAL_PX : 0
     startX.current = event.clientX
@@ -471,7 +619,7 @@ function SwipeableComboCard({
     event.currentTarget.setPointerCapture(event.pointerId)
   }
 
-  const handlePointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (sort.handlePointerMove(event)) return
     if (startX.current === null) return
     const baseOffset = open ? -SWIPE_REVEAL_PX : 0
@@ -482,7 +630,7 @@ function SwipeableComboCard({
     setDragOffset(nextOffset)
   }
 
-  const finishSwipe = (event: ReactPointerEvent<HTMLButtonElement>, commitSort = true) => {
+  const finishSwipe = (event: ReactPointerEvent<HTMLDivElement>, commitSort = true) => {
     if (sort.finish(event, commitSort)) {
       startX.current = null
       setDragging(false)
@@ -515,43 +663,61 @@ function SwipeableComboCard({
       >
         削除
       </button>
-      <button
+      <div
         className={`card row-card with-avatar swipe-card ${dragging ? 'dragging' : ''} ${sort.sorting ? 'sorting' : ''}`}
         data-sort-id={combo.id}
         data-sort-group="combos"
-        data-sort-handle
         style={{ transform: cardTransform }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={finishSwipe}
         onPointerCancel={(event) => finishSwipe(event, false)}
         onContextMenu={sort.preventContextMenu}
-        onClick={(event) => {
-          if (sort.consumeClick() || isSortClickGuarded() || moved.current) {
-            moved.current = false
-            event.preventDefault()
-            return
-          }
-          if (open) onSwipeClose()
-          else onOpen()
-        }}
-        aria-label={combo.title}
       >
-        <span className="avatar-stack">
-          {members.map((member) => (
-            <Avatar key={member.id} character={member} size={40} />
-          ))}
-        </span>
-        <span className="row-card-text">
-          <span className="card-title">{combo.title}</span>
-          <span className="card-sub">
-            {members.map((member) => member.name).join(' / ')} ・ {combo.steps.length}行
+        <button
+          className="swipe-card-main"
+          data-sort-handle
+          onClick={(event) => {
+            if (sort.consumeClick() || isSortClickGuarded() || moved.current) {
+              moved.current = false
+              event.preventDefault()
+              return
+            }
+            if (open) onSwipeClose()
+            else onOpen()
+          }}
+          aria-label={combo.title}
+        >
+          <span className="avatar-stack">
+            {members.map((member) => (
+              <Avatar key={member.id} character={member} size={40} />
+            ))}
           </span>
-        </span>
+          <span className="row-card-text">
+            <span className="card-title">{combo.title}</span>
+            <span className="card-sub">
+              {members.map((member) => member.name).join(' / ')} ・ {combo.steps.length}行
+            </span>
+          </span>
+        </button>
+        <button
+          className={`favorite-button ${combo.favorite ? 'active' : ''}`}
+          data-card-action
+          data-sort-ignore
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation()
+            onToggleFavorite()
+          }}
+          aria-label={combo.favorite ? 'お気に入りから外す' : 'お気に入りに追加'}
+          aria-pressed={Boolean(combo.favorite)}
+        >
+          <StarIcon filled={Boolean(combo.favorite)} />
+        </button>
         <span className="drag-grip" data-sort-handle aria-hidden="true">
           ⠿
         </span>
-      </button>
+      </div>
     </div>
   )
 }
@@ -562,12 +728,18 @@ function MemberPicker({
   characters,
   onCancel,
   onSubmit,
+  initialSelected = [],
+  title = 'キャラを選ぶ',
+  submitLabel = 'この編成で作成',
 }: {
   characters: Character[]
   onCancel: () => void
   onSubmit: (memberIds: string[]) => void
+  initialSelected?: string[]
+  title?: string
+  submitLabel?: string
 }) {
-  const [selected, setSelected] = useState<string[]>([])
+  const [selected, setSelected] = useState<string[]>(() => initialSelected.slice(0, 3))
   const [query, setQuery] = useState('')
   const [element, setElement] = useState('')
   const [weapon, setWeapon] = useState('')
@@ -606,11 +778,13 @@ function MemberPicker({
           disabled={selected.length === 0}
           onClick={() => onSubmit(selected)}
         >
-          この編成で作成 →
+          {submitLabel} →
         </button>
       </header>
       <span className="page-kicker">メンバー選択</span>
-      <h1 className="picker-title">キャラを選ぶ（{selected.length}/3）</h1>
+      <h1 className="picker-title">
+        {title}（{selected.length}/3）
+      </h1>
       <div className="member-preview">
         {[0, 1, 2].map((i) => {
           const c = characters.find((x) => x.id === selected[i])
@@ -700,23 +874,34 @@ function ComboEditor({
   onChange,
   onBack,
   onDelete,
+  onDuplicate,
+  onChangeMembers,
   onAddCharacterAction,
   onRenameCharacterAction,
   onDeleteCharacterAction,
+  onReorderCharacterAction,
 }: {
   data: AppData
   combo: Combo
   onChange: (c: Combo) => void
   onBack: () => void
   onDelete: () => void
+  onDuplicate: () => void
+  onChangeMembers: (memberIds: string[]) => void
   onAddCharacterAction: (characterId: string, name: string) => void
   onRenameCharacterAction: (characterId: string, actionId: string, name: string) => void
   onDeleteCharacterAction: (characterId: string, actionId: string) => void
+  onReorderCharacterAction: (
+    characterId: string,
+    sourceId: string,
+    targetId: string,
+  ) => void
 }) {
   const [mode, setMode] = useState<'edit' | 'view' | 'command'>('edit')
   const [activeStepId, setActiveStepId] = useState<string | null>(null)
   const [activeActionId, setActiveActionId] = useState<string | null>(null)
   const [organizing, setOrganizing] = useState(false)
+  const [changingMembers, setChangingMembers] = useState(false)
 
   const party = data.parties.find((p) => p.id === combo.partyId)
   const members = (party?.memberIds ?? [])
@@ -758,6 +943,22 @@ function ComboEditor({
     if (steps !== combo.steps) onChange({ ...combo, steps })
   }
 
+  const duplicateStep = (id: string) => {
+    const sourceIndex = combo.steps.findIndex((step) => step.id === id)
+    if (sourceIndex < 0) return
+    const source = combo.steps[sourceIndex]
+    const duplicate: ComboStep = {
+      ...source,
+      id: newId(),
+      actions: source.actions.map((action) => ({ ...action, id: newId() })),
+    }
+    const steps = [...combo.steps]
+    steps.splice(sourceIndex + 1, 0, duplicate)
+    onChange({ ...combo, steps })
+    setActiveStepId(duplicate.id)
+    setActiveActionId(null)
+  }
+
   const appendAction = (step: ComboStep, actionId: string) => {
     setStep({ ...step, actions: [...step.actions, { id: newId(), actionId }] })
   }
@@ -792,21 +993,51 @@ function ComboEditor({
     return def?.button ?? (def ? resolveButtonForAction(def.name, buttonMap) : undefined)
   }
 
+  if (changingMembers) {
+    return (
+      <MemberPicker
+        characters={data.characters}
+        initialSelected={party?.memberIds ?? []}
+        title="編成を変更"
+        submitLabel="この編成に変更"
+        onCancel={() => setChangingMembers(false)}
+        onSubmit={(memberIds) => {
+          onChangeMembers(memberIds)
+          setChangingMembers(false)
+        }}
+      />
+    )
+  }
+
   // ---- 閲覧モード：手書きノート風の大きな表示 / コマンドモード（ボタンのみ） ----
   if (mode !== 'edit') {
     const command = mode === 'command'
     return (
       <div className="page">
-        <header className="page-header">
-          <button onClick={() => setMode('edit')}>✏️ 編集</button>
-          <button
-            className={command ? 'primary' : ''}
-            onClick={() => setMode(command ? 'view' : 'command')}
-          >
-            {command ? '技名表示' : '🎮 コマンド'}
-          </button>
+        <header className="page-header view-page-header">
           <button onClick={onBack}>一覧へ</button>
+          <button onClick={() => setMode('edit')}>
+            <EditIcon />
+            編集
+          </button>
         </header>
+        <div className="display-mode-control" role="group" aria-label="表示方法">
+          <button
+            className={!command ? 'active' : ''}
+            onClick={() => setMode('view')}
+            aria-pressed={!command}
+          >
+            技名
+          </button>
+          <button
+            className={command ? 'active' : ''}
+            onClick={() => setMode('command')}
+            aria-pressed={command}
+          >
+            <CommandIcon />
+            コマンド
+          </button>
+        </div>
         <h1 className="view-title">{combo.title}</h1>
         <div className="view-steps">
           {combo.steps.map((s) => {
@@ -877,9 +1108,12 @@ function ComboEditor({
     <div className="page">
       <header className="page-header">
         <button onClick={onBack}>← 一覧</button>
-        <button className="primary" onClick={() => setMode('view')}>
-          閲覧モード
-        </button>
+        <span className="page-header-actions">
+          <button onClick={() => setChangingMembers(true)}>編成</button>
+          <button className="primary" onClick={() => setMode('view')}>
+            表示
+          </button>
+        </span>
       </header>
       <section className="editor-intro">
         <span className="page-kicker">ローテーション編集</span>
@@ -932,6 +1166,13 @@ function ComboEditor({
                   ⠿
                 </span>
                 <span className="step-tools" data-sort-ignore>
+                  <button
+                    className="icon-btn"
+                    onClick={() => duplicateStep(s.id)}
+                    aria-label="この行を複製"
+                  >
+                    ⧉
+                  </button>
                   <button
                     className="icon-btn"
                     onClick={() => moveStep(s.id, -1)}
@@ -999,31 +1240,46 @@ function ComboEditor({
                   {organizing && (
                     <div className="hint organize-hint">技名の編集・削除</div>
                   )}
-                  {ch.actions.map((a) =>
-                    organizing ? (
-                      <button
-                        key={a.id}
-                        className="chip organize"
-                        onClick={() => {
-                          const v = prompt('技名', a.name)
-                          if (v === null) return
-                          if (v.trim() === '') onDeleteCharacterAction(ch.id, a.id)
-                          else onRenameCharacterAction(ch.id, a.id, v.trim())
-                        }}
-                      >
-                        ✎ {a.name}
-                      </button>
-                    ) : (
-                      <button key={a.id} className="chip" onClick={() => chooseAction(s, a.id)}>
-                        {a.name}
-                        {(a.button ?? resolveButtonForAction(a.name, buttonMap)) && (
-                          <span className="btn-label">
-                            {a.button ?? resolveButtonForAction(a.name, buttonMap)}
-                          </span>
-                        )}
-                      </button>
-                    ),
-                  )}
+                  {ch.actions.map((a) => (
+                    <SortableItem
+                      key={a.id}
+                      id={a.id}
+                      group={`palette-${ch.id}`}
+                      onMove={(sourceId, targetId) =>
+                        onReorderCharacterAction(ch.id, sourceId, targetId)
+                      }
+                      onSortStart={() => setActiveActionId(null)}
+                      className="palette-action-sortable"
+                    >
+                      {organizing ? (
+                        <button
+                          className="chip organize"
+                          data-sort-handle
+                          onClick={() => {
+                            const v = prompt('技名', a.name)
+                            if (v === null) return
+                            if (v.trim() === '') onDeleteCharacterAction(ch.id, a.id)
+                            else onRenameCharacterAction(ch.id, a.id, v.trim())
+                          }}
+                        >
+                          ✎ {a.name}
+                        </button>
+                      ) : (
+                        <button
+                          className="chip"
+                          data-sort-handle
+                          onClick={() => chooseAction(s, a.id)}
+                        >
+                          {a.name}
+                          {(a.button ?? resolveButtonForAction(a.name, buttonMap)) && (
+                            <span className="btn-label">
+                              {a.button ?? resolveButtonForAction(a.name, buttonMap)}
+                            </span>
+                          )}
+                        </button>
+                      )}
+                    </SortableItem>
+                  ))}
                   <div className="palette-utilities">
                     <button className="chip add-chip" onClick={() => addCustomAction(ch)}>
                       ＋ 技を追加
@@ -1071,7 +1327,7 @@ function ComboEditor({
       </div>
 
       <div className="editor-foot">
-        <span />
+        <button onClick={onDuplicate}>ローテーションを複製</button>
         <button className="danger" onClick={onDelete}>
           ローテーションを削除
         </button>

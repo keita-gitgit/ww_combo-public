@@ -65,6 +65,8 @@ export interface Combo {
   id: string
   partyId: string
   title: string
+  /** 一覧で絞り込むためのお気に入り */
+  favorite?: boolean
   memo?: string
   /** 参考にした動画・投稿のURL（最大20件） */
   referenceUrls?: string[]

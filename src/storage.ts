@@ -120,6 +120,7 @@ function isCombo(value: unknown): value is Combo {
     typeof value.id === 'string' &&
     typeof value.partyId === 'string' &&
     typeof value.title === 'string' &&
+    isOptionalBoolean(value.favorite) &&
     isOptionalString(value.memo) &&
     (referenceUrls === undefined ||
       (isStringArray(referenceUrls, MAX_REFERENCE_URLS) &&
