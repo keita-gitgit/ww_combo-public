@@ -25,9 +25,9 @@ interface Props {
 
 const LONG_PRESS_MS = 450
 const SORT_CLICK_GUARD_MS = 500
-const COMMAND_SCALE_MIN = 0.6
-const COMMAND_SCALE_MAX = 1.2
-const COMMAND_SCALE_STEP = 0.1
+const DISPLAY_SCALE_MIN = 0.6
+const DISPLAY_SCALE_MAX = 1.2
+const DISPLAY_SCALE_STEP = 0.1
 const CARD_TONE_OPTIONS: Array<{ value: '' | ComboCardTone; label: string }> = [
   { value: '', label: '標準' },
   { value: '焦熱', label: '焦熱・赤' },
@@ -35,7 +35,7 @@ const CARD_TONE_OPTIONS: Array<{ value: '' | ComboCardTone; label: string }> = [
   { value: '電導', label: '電導・紫' },
   { value: '気動', label: '気動・緑' },
   { value: '回折', label: '回折・金' },
-  { value: '消滅', label: '消滅・暗紫' },
+  { value: '消滅', label: '消滅・赤紫' },
 ]
 
 let sortClickGuardUntil = 0
@@ -320,7 +320,10 @@ function SortableItem({
 export default function RotationPage({ data, setData }: Props) {
   const [selectedComboId, setSelectedComboId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
-  const [openSwipeId, setOpenSwipeId] = useState<string | null>(null)
+  const [openSwipe, setOpenSwipe] = useState<{
+    id: string
+    side: 'delete' | 'tone'
+  } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [favoritesOnly, setFavoritesOnly] = useState(false)
 
@@ -334,7 +337,7 @@ export default function RotationPage({ data, setData }: Props) {
   const deleteCombo = (id: string) => {
     if (!confirm('このローテーションを削除しますか？')) return
     setData({ ...data, combos: data.combos.filter((x) => x.id !== id) })
-    setOpenSwipeId(null)
+    setOpenSwipe(null)
     setSelectedComboId(null)
   }
 
@@ -427,6 +430,18 @@ export default function RotationPage({ data, setData }: Props) {
         item.id === id ? { ...item, favorite: !item.favorite } : item,
       ),
     })
+  }
+
+  const changeComboTone = (id: string, cardTone?: ComboCardTone) => {
+    setData({
+      ...data,
+      combos: data.combos.map((item) =>
+        item.id === id
+          ? { ...item, cardTone, updatedAt: new Date().toISOString() }
+          : item,
+      ),
+    })
+    setOpenSwipe(null)
   }
 
   const reorderCharacterAction = (
@@ -576,14 +591,15 @@ export default function RotationPage({ data, setData }: Props) {
             key={c.id}
             combo={c}
             members={members}
-            open={openSwipeId === c.id}
+            openSide={openSwipe?.id === c.id ? openSwipe.side : null}
             onOpen={() => {
-              setOpenSwipeId(null)
+              setOpenSwipe(null)
               setSelectedComboId(c.id)
             }}
-            onSwipeOpen={() => setOpenSwipeId(c.id)}
-            onSwipeClose={() => setOpenSwipeId(null)}
+            onSwipeOpen={(side) => setOpenSwipe({ id: c.id, side })}
+            onSwipeClose={() => setOpenSwipe(null)}
             onDelete={() => deleteCombo(c.id)}
+            onChangeTone={(cardTone) => changeComboTone(c.id, cardTone)}
             onToggleFavorite={() => toggleFavorite(c.id)}
             onReorder={reorderCombo}
           />
@@ -593,26 +609,29 @@ export default function RotationPage({ data, setData }: Props) {
   )
 }
 
-const SWIPE_REVEAL_PX = 88
+const SWIPE_DELETE_REVEAL_PX = 88
+const SWIPE_TONE_REVEAL_PX = 184
 
 function SwipeableComboCard({
   combo,
   members,
-  open,
+  openSide,
   onOpen,
   onSwipeOpen,
   onSwipeClose,
   onDelete,
+  onChangeTone,
   onToggleFavorite,
   onReorder,
 }: {
   combo: Combo
   members: Character[]
-  open: boolean
+  openSide: 'delete' | 'tone' | null
   onOpen: () => void
-  onSwipeOpen: () => void
+  onSwipeOpen: (side: 'delete' | 'tone') => void
   onSwipeClose: () => void
   onDelete: () => void
+  onChangeTone: (cardTone?: ComboCardTone) => void
   onToggleFavorite: () => void
   onReorder: (sourceId: string, targetId: string) => void
 }) {
@@ -639,7 +658,12 @@ function SwipeableComboCard({
     if (event.button !== 0) return
     if ((event.target as HTMLElement).closest('[data-card-action]')) return
     sort.handlePointerDown(event)
-    const initialOffset = open ? -SWIPE_REVEAL_PX : 0
+    const initialOffset =
+      openSide === 'delete'
+        ? -SWIPE_DELETE_REVEAL_PX
+        : openSide === 'tone'
+          ? SWIPE_TONE_REVEAL_PX
+          : 0
     startX.current = event.clientX
     dragOffsetRef.current = initialOffset
     moved.current = false
@@ -651,10 +675,18 @@ function SwipeableComboCard({
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (sort.handlePointerMove(event)) return
     if (startX.current === null) return
-    const baseOffset = open ? -SWIPE_REVEAL_PX : 0
+    const baseOffset =
+      openSide === 'delete'
+        ? -SWIPE_DELETE_REVEAL_PX
+        : openSide === 'tone'
+          ? SWIPE_TONE_REVEAL_PX
+          : 0
     const delta = event.clientX - startX.current
     if (Math.abs(delta) > 8) moved.current = true
-    const nextOffset = Math.max(-SWIPE_REVEAL_PX, Math.min(0, baseOffset + delta))
+    const nextOffset = Math.max(
+      -SWIPE_DELETE_REVEAL_PX,
+      Math.min(SWIPE_TONE_REVEAL_PX, baseOffset + delta),
+    )
     dragOffsetRef.current = nextOffset
     setDragOffset(nextOffset)
   }
@@ -672,18 +704,50 @@ function SwipeableComboCard({
     }
     startX.current = null
     setDragging(false)
-    if (dragOffsetRef.current <= -SWIPE_REVEAL_PX / 2) onSwipeOpen()
-    else onSwipeClose()
+    if (dragOffsetRef.current <= -SWIPE_DELETE_REVEAL_PX / 2) {
+      onSwipeOpen('delete')
+    } else if (dragOffsetRef.current >= SWIPE_TONE_REVEAL_PX / 2) {
+      onSwipeOpen('tone')
+    } else {
+      onSwipeClose()
+    }
   }
 
-  const visualOffset = dragging ? dragOffset : open ? -SWIPE_REVEAL_PX : 0
+  const visualOffset = dragging
+    ? dragOffset
+    : openSide === 'delete'
+      ? -SWIPE_DELETE_REVEAL_PX
+      : openSide === 'tone'
+        ? SWIPE_TONE_REVEAL_PX
+        : 0
 
   const cardTransform = sort.sorting
     ? `translate3d(${sort.dragOffset.x}px, ${sort.dragOffset.y - 5}px, 0) scale(1.025)`
     : `translateX(${visualOffset}px)`
+  const showTonePanel = openSide === 'tone' || (dragging && dragOffset > 0)
 
   return (
-    <div className={`swipe-row ${open ? 'open' : ''} ${sort.sorting ? 'sorting' : ''}`}>
+    <div
+      className={`swipe-row ${openSide ? `open-${openSide}` : ''} ${sort.sorting ? 'sorting' : ''}`}
+    >
+      {showTonePanel && (
+        <div className="swipe-tone-panel" data-sort-ignore aria-label="カード色">
+          {CARD_TONE_OPTIONS.map((option) => (
+            <button
+              key={option.value || 'default'}
+              className={`swipe-tone-option ${(combo.cardTone ?? '') === option.value ? 'active' : ''}`}
+              data-card-action
+              data-card-tone={option.value || undefined}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={() => onChangeTone(option.value || undefined)}
+              aria-label={`カード色を${option.label}に変更`}
+              aria-pressed={(combo.cardTone ?? '') === option.value}
+            >
+              <span aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+      )}
       <button
         className="swipe-delete"
         data-sort-ignore
@@ -713,7 +777,7 @@ function SwipeableComboCard({
               event.preventDefault()
               return
             }
-            if (open) onSwipeClose()
+            if (openSide) onSwipeClose()
             else onOpen()
           }}
           aria-label={combo.title}
@@ -1023,11 +1087,11 @@ function ComboEditor({
     return def?.button ?? (def ? resolveButtonForAction(def.name, buttonMap) : undefined)
   }
 
-  const commandScale = combo.commandScale ?? 1
-  const changeCommandScale = (delta: number) => {
+  const displayScale = combo.commandScale ?? 1
+  const changeDisplayScale = (delta: number) => {
     const next = Math.min(
-      COMMAND_SCALE_MAX,
-      Math.max(COMMAND_SCALE_MIN, Math.round((commandScale + delta) * 10) / 10),
+      DISPLAY_SCALE_MAX,
+      Math.max(DISPLAY_SCALE_MIN, Math.round((displayScale + delta) * 10) / 10),
     )
     onChange({
       ...combo,
@@ -1080,32 +1144,26 @@ function ComboEditor({
             コマンド
           </button>
         </div>
-        {command && (
-          <div className="command-size-control" role="group" aria-label="コマンド表示サイズ">
-            <button
-              onClick={() => changeCommandScale(-COMMAND_SCALE_STEP)}
-              disabled={commandScale <= COMMAND_SCALE_MIN}
-              aria-label="コマンド表示を小さくする"
-            >
-              −
-            </button>
-            <output aria-live="polite">{Math.round(commandScale * 100)}%</output>
-            <button
-              onClick={() => changeCommandScale(COMMAND_SCALE_STEP)}
-              disabled={commandScale >= COMMAND_SCALE_MAX}
-              aria-label="コマンド表示を大きくする"
-            >
-              ＋
-            </button>
-          </div>
-        )}
+        <div className="display-size-control" role="group" aria-label="表示サイズ">
+          <button
+            onClick={() => changeDisplayScale(-DISPLAY_SCALE_STEP)}
+            disabled={displayScale <= DISPLAY_SCALE_MIN}
+            aria-label="表示を小さくする"
+          >
+            −
+          </button>
+          <output aria-live="polite">{Math.round(displayScale * 100)}%</output>
+          <button
+            onClick={() => changeDisplayScale(DISPLAY_SCALE_STEP)}
+            disabled={displayScale >= DISPLAY_SCALE_MAX}
+            aria-label="表示を大きくする"
+          >
+            ＋
+          </button>
+        </div>
         <div
-          className={command ? 'command-content' : undefined}
-          style={
-            command
-              ? ({ '--command-scale': commandScale } as CSSProperties)
-              : undefined
-          }
+          className="display-content"
+          style={{ '--display-scale': displayScale } as CSSProperties}
         >
           <h1 className="view-title">{combo.title}</h1>
           <div className="view-steps">
@@ -1179,14 +1237,14 @@ function ComboEditor({
             })}
           </div>
         </div>
-        {(combo.referenceUrls?.length ?? 0) > 0 && (
-          <ReferenceLinks urls={combo.referenceUrls ?? []} />
-        )}
         {combo.memo && (
           <section className="card combo-memo-card combo-memo-view">
             <span className="page-kicker">メモ</span>
             <p>{combo.memo}</p>
           </section>
+        )}
+        {(combo.referenceUrls?.length ?? 0) > 0 && (
+          <ReferenceLinks urls={combo.referenceUrls ?? []} />
         )}
       </div>
     )
@@ -1449,22 +1507,12 @@ function ComboEditor({
         </button>
       </div>
 
-      <ReferenceLinksEditor
-        urls={combo.referenceUrls ?? []}
-        onChange={(referenceUrls) =>
-          onChange({
-            ...combo,
-            referenceUrls: referenceUrls.length > 0 ? referenceUrls : undefined,
-          })
-        }
-      />
-
       <section className="card combo-memo-card">
         <span className="page-kicker">メモ</span>
         <textarea
           className="combo-memo-input"
           aria-label="ローテーションのメモ"
-          placeholder="ローテーション全体のメモ"
+          placeholder="ローテーションや音骸などのメモ"
           maxLength={10000}
           value={combo.memo ?? ''}
           onChange={(event) =>
@@ -1475,6 +1523,16 @@ function ComboEditor({
           }
         />
       </section>
+
+      <ReferenceLinksEditor
+        urls={combo.referenceUrls ?? []}
+        onChange={(referenceUrls) =>
+          onChange({
+            ...combo,
+            referenceUrls: referenceUrls.length > 0 ? referenceUrls : undefined,
+          })
+        }
+      />
     </div>
   )
 }

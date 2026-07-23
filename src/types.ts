@@ -73,7 +73,7 @@ export interface Combo {
   favorite?: boolean
   /** 一覧カードへ付ける属性色 */
   cardTone?: ComboCardTone
-  /** コマンド表示の倍率（0.6〜1.2） */
+  /** 技名・コマンド閲覧画面の表示倍率（0.6〜1.2） */
   commandScale?: number
   memo?: string
   /** 参考にした動画・投稿のURL（最大20件） */

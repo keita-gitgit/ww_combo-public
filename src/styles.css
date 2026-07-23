@@ -489,6 +489,53 @@ textarea::placeholder {
   border-radius: var(--radius-xl);
 }
 
+.swipe-tone-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  width: 184px;
+  grid-template-columns: repeat(4, 34px);
+  align-content: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+  background: var(--panel);
+}
+
+.swipe-tone-option {
+  display: grid;
+  width: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  place-items: center;
+  padding: 0;
+  border-color: var(--line);
+  border-radius: 50%;
+  background: var(--card-opaque);
+}
+
+.swipe-tone-option > span {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text) 16%, transparent);
+}
+
+.swipe-tone-option[data-card-tone] > span {
+  background: rgb(var(--tone-rgb));
+}
+
+.swipe-tone-option.active {
+  border-color: var(--text);
+  box-shadow:
+    0 0 0 2px var(--panel),
+    0 0 0 3px var(--text);
+}
+
 .swipe-delete {
   position: absolute;
   top: 0;
@@ -550,7 +597,7 @@ textarea::placeholder {
 }
 
 [data-card-tone='消滅'] {
-  --tone-rgb: 103, 73, 126;
+  --tone-rgb: 158, 58, 112;
 }
 
 .swipe-card.dragging {
@@ -1541,7 +1588,7 @@ body.sorting-active {
   font-weight: 600;
 }
 
-.command-size-control {
+.display-size-control {
   display: grid;
   grid-template-columns: 44px minmax(72px, auto) 44px;
   align-items: center;
@@ -1550,67 +1597,79 @@ body.sorting-active {
   margin: 0 4px 12px;
 }
 
-.command-size-control button {
+.display-size-control button {
   min-height: 40px;
   padding: 4px;
   font-size: 1.25rem;
 }
 
-.command-size-control output {
+.display-size-control output {
   color: var(--sub);
   font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
   text-align: center;
 }
 
-.command-content {
-  --command-scale: 1;
+.display-content {
+  --display-scale: 1;
 }
 
-.command-content .view-title {
-  margin-bottom: calc(16px * var(--command-scale));
-  font-size: calc(1.75rem * var(--command-scale));
+.display-content .view-title {
+  margin-bottom: calc(16px * var(--display-scale));
+  font-size: calc(1.75rem * var(--display-scale));
 }
 
-.command-content .view-steps {
-  gap: calc(8px * var(--command-scale));
+.display-content .view-steps {
+  gap: calc(8px * var(--display-scale));
 }
 
-.command-content .view-step {
-  padding: calc(14px * var(--command-scale));
-  border-radius: calc(14px * var(--command-scale));
+.display-content .view-step {
+  padding: calc(14px * var(--display-scale));
+  border-radius: calc(14px * var(--display-scale));
 }
 
-.command-content .view-line {
-  gap: calc(10px * var(--command-scale));
-  font-size: calc(1.0625rem * var(--command-scale));
+.display-content .view-line {
+  gap: calc(10px * var(--display-scale));
+  font-size: calc(1.0625rem * var(--display-scale));
 }
 
-.command-content .view-char {
-  gap: calc(6px * var(--command-scale));
+.display-content .view-char {
+  gap: calc(6px * var(--display-scale));
 }
 
-.command-content .view-char .avatar {
-  width: calc(32px * var(--command-scale)) !important;
-  height: calc(32px * var(--command-scale)) !important;
-  border-radius: calc(11px * var(--command-scale));
+.display-content .view-char .avatar {
+  width: calc(32px * var(--display-scale)) !important;
+  height: calc(32px * var(--display-scale)) !important;
+  border-radius: calc(11px * var(--display-scale));
 }
 
-.command-content .command-seq,
-.command-content .cmd-pair {
-  gap: calc(8px * var(--command-scale));
+.display-content .view-points {
+  margin:
+    calc(7px * var(--display-scale))
+    0
+    0
+    calc(42px * var(--display-scale));
 }
 
-.command-content .cmd-btn {
+.display-content .view-note {
+  font-size: calc(0.8125rem * var(--display-scale));
+}
+
+.display-content .command-seq,
+.display-content .cmd-pair {
+  gap: calc(8px * var(--display-scale));
+}
+
+.display-content .cmd-btn {
   padding:
-    calc(3px * var(--command-scale))
-    calc(11px * var(--command-scale));
-  border-radius: calc(9px * var(--command-scale));
-  font-size: calc(1.0625rem * var(--command-scale));
+    calc(3px * var(--display-scale))
+    calc(11px * var(--display-scale));
+  border-radius: calc(9px * var(--display-scale));
+  font-size: calc(1.0625rem * var(--display-scale));
 }
 
-.command-content .cmd-arrow {
-  font-size: calc(15px * var(--command-scale));
+.display-content .cmd-arrow {
+  font-size: calc(15px * var(--display-scale));
 }
 
 .view-steps {
