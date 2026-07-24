@@ -1135,15 +1135,6 @@ body.sorting-active {
   text-overflow: ellipsis;
 }
 
-.step-meta {
-  margin-top: 2px;
-  overflow: hidden;
-  color: var(--sub);
-  font-size: 0.75rem;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
 .step-tools {
   display: flex;
   flex: 0 0 auto;

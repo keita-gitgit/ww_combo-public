@@ -1334,12 +1334,6 @@ function ComboEditor({
                   <Avatar character={ch} size={34} />
                   <span className="step-char-copy">
                     <span className="step-char-name">{ch?.name}</span>
-                    <span className="step-meta">
-                      ステップ {si + 1}・
-                      {active
-                        ? '技パレットを表示中'
-                        : `${s.actions.length}アクション`}
-                    </span>
                   </span>
                 </button>
                 <span className="drag-grip step-drag-grip" data-sort-handle aria-hidden="true">
