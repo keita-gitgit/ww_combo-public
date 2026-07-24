@@ -189,6 +189,11 @@ function getDraftTotalCost(slots: readonly SlotDraft[]) {
   )
 }
 
+function formatEchoScore(score: number): string {
+  const rounded = Math.round(score * 10) / 10
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
+}
+
 export default function EchoScorePage({ data, setData }: Props) {
   const records = data.echoLoadouts ?? []
   const [editing, setEditing] = useState(false)
@@ -442,7 +447,7 @@ export default function EchoScorePage({ data, setData }: Props) {
                     <span className="echo-record-copy">
                       <strong>{character?.name ?? '未登録のキャラ'}</strong>
                       <span>
-                        COST {cost}/12 ・ {record.slots.length}枠入力
+                        コスト {cost}/12 ・ {record.slots.length}枠入力
                       </span>
                       <small>
                         {summary.length > 0
@@ -452,7 +457,7 @@ export default function EchoScorePage({ data, setData }: Props) {
                     </span>
                     <span className="echo-score-badge">
                       <span>TOTAL</span>
-                      <strong>{record.totalScore.toFixed(1)}</strong>
+                      <strong>{formatEchoScore(record.totalScore)}</strong>
                     </span>
                   </button>
                   <div className="echo-record-substats echo-record-pieces">
@@ -462,7 +467,8 @@ export default function EchoScorePage({ data, setData }: Props) {
                         const echo = ECHO_BY_ID.get(slot.echoId)
                         return (
                           <span key={slot.id}>
-                            {slot.position}. C{echo?.cost ?? '?'} {slot.score.toFixed(1)}
+                            {slot.position}. C{echo?.cost ?? '?'}{' '}
+                            {formatEchoScore(slot.score)}
                           </span>
                         )
                       })}
@@ -564,10 +570,10 @@ export default function EchoScorePage({ data, setData }: Props) {
         <div className="echo-loadout-totals">
           <span>
             <small>合計スコア</small>
-            <strong>{totalScore.toFixed(1)}</strong>
+            <strong>{formatEchoScore(totalScore)}</strong>
           </span>
           <span className={totalCost > 12 ? 'over' : ''}>
-            <small>合計COST</small>
+            <small>合計コスト</small>
             <strong>{totalCost}/12</strong>
           </span>
         </div>
@@ -594,7 +600,7 @@ export default function EchoScorePage({ data, setData }: Props) {
                 <small>
                   {slot.cost ? `C${slot.cost}` : echo ? `C${echo.cost}` : '未設定'}
                 </small>
-                {isCompleteSlot(slot) && <b>{slotScore.toFixed(1)}</b>}
+                {isCompleteSlot(slot) && <b>{formatEchoScore(slotScore)}</b>}
               </button>
             )
           })}
@@ -637,9 +643,9 @@ export default function EchoScorePage({ data, setData }: Props) {
                   event.target.value === '' ? '' : (Number(event.target.value) as EchoCost),
                 )
               }
-              aria-label={`音骸${activeSlot.position}のCOST`}
+              aria-label={`音骸${activeSlot.position}のコスト`}
             >
-              <option value="">COST</option>
+              <option value="">コスト</option>
               <option value="1">C1</option>
               <option value="3">C3</option>
               <option value="4">C4</option>
@@ -658,7 +664,9 @@ export default function EchoScorePage({ data, setData }: Props) {
             <input
               id="echo-name-search"
               value={echoQuery}
-              placeholder={activeSlot.cost ? `C${activeSlot.cost}の音骸名で検索` : '先にCOSTを選択'}
+              placeholder={
+                activeSlot.cost ? `C${activeSlot.cost}の音骸名で検索` : '先にコストを選択'
+              }
               autoComplete="off"
               disabled={!activeSlot.cost}
               onFocus={() => activeSlot.cost && setShowEchoResults(true)}
@@ -682,7 +690,7 @@ export default function EchoScorePage({ data, setData }: Props) {
                       onClick={() => selectEcho(echo.id)}
                     >
                       <span>{echo.name}</span>
-                      <small>COST {echo.cost}</small>
+                      <small>コスト {echo.cost}</small>
                     </button>
                   ))
                 )}
@@ -693,7 +701,7 @@ export default function EchoScorePage({ data, setData }: Props) {
 
         {selectedEcho && (
           <div className="echo-selection-summary">
-            <span className="echo-cost-mark">COST {selectedEcho.cost}</span>
+            <span className="echo-cost-mark">コスト {selectedEcho.cost}</span>
             <strong>{selectedEcho.name}</strong>
           </div>
         )}
@@ -827,12 +835,16 @@ export default function EchoScorePage({ data, setData }: Props) {
 
         <div className="echo-slot-score">
           <span>音骸{activeSlot.position}のスコア</span>
-          <strong>{activeSubstats.length > 0 ? activeScore.toFixed(1) : '—'}</strong>
-          <b>{activeSubstats.length > 0 ? activeRank : '—'}</b>
+          <span className="echo-slot-score-value">
+            <strong>
+              {activeSubstats.length > 0 ? formatEchoScore(activeScore) : '—'}
+            </strong>
+            <b>{activeSubstats.length > 0 ? activeRank : '—'}</b>
+          </span>
           {activeBreakdown && activeSlot.mainStatId && (
             <small>
-              メイン {activeBreakdown.mainStatScore.toFixed(1)} ＋ サブ{' '}
-              {activeBreakdown.substatScore.toFixed(1)}
+              メイン {formatEchoScore(activeBreakdown.mainStatScore)} ＋ サブ{' '}
+              {formatEchoScore(activeBreakdown.substatScore)}
             </small>
           )}
         </div>
@@ -848,7 +860,9 @@ export default function EchoScorePage({ data, setData }: Props) {
         </div>
         <div className="echo-score-result-value">
           <span>TOTAL</span>
-          <strong>{completedSlots.length > 0 ? totalScore.toFixed(1) : '—'}</strong>
+          <strong>
+            {completedSlots.length > 0 ? formatEchoScore(totalScore) : '—'}
+          </strong>
         </div>
         <p>
           {selectedWeights
@@ -865,7 +879,7 @@ export default function EchoScorePage({ data, setData }: Props) {
         </p>
       )}
       {totalCost > 12 && (
-        <p className="echo-save-warning">合計COSTが12を超えています。</p>
+        <p className="echo-save-warning">合計コストが12を超えています。</p>
       )}
       <button className="primary echo-save-button" disabled={!canSave} onClick={save}>
         {draft.id

@@ -2479,7 +2479,9 @@ body.sorting-active .repeat-drop-zone::before {
 }
 
 .echo-cost-select {
-  width: 76px;
+  width: 92px;
+  min-width: 92px;
+  flex: 0 0 92px;
   min-height: 34px;
   padding: 5px 24px 5px 9px;
   border-color: var(--accent-line);
@@ -2512,7 +2514,7 @@ body.sorting-active .repeat-drop-zone::before {
 
 .echo-slot-score {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
   gap: 8px;
   padding: 10px 11px;
@@ -2523,16 +2525,25 @@ body.sorting-active .repeat-drop-zone::before {
 }
 
 .echo-slot-score span {
+  min-width: 0;
   color: var(--label-text);
   font-size: 0.75rem;
 }
 
-.echo-slot-score strong {
+.echo-slot-score-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.echo-slot-score .echo-slot-score-value strong {
   color: var(--accent);
   font-size: 1.125rem;
 }
 
-.echo-slot-score b {
+.echo-slot-score .echo-slot-score-value b {
   color: var(--accent);
   font-size: 0.75rem;
   letter-spacing: 0.08em;
