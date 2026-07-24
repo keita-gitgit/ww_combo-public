@@ -315,6 +315,66 @@ function SortableItem({
   )
 }
 
+function RepeatMarkerLabel() {
+  return (
+    <>
+      <span className="repeat-marker-line" aria-hidden="true" />
+      <span className="repeat-marker-label">
+        <span aria-hidden="true">↻</span> 2ローテ目以降はここから
+      </span>
+      <span className="repeat-marker-line" aria-hidden="true" />
+    </>
+  )
+}
+
+function EditableRepeatMarker({
+  stepId,
+  group,
+  onMove,
+  onRemove,
+  onSortStart,
+}: {
+  stepId: string
+  group: string
+  onMove: (sourceId: string, targetId: string) => void
+  onRemove: () => void
+  onSortStart?: () => void
+}) {
+  return (
+    <SortableItem
+      id={stepId}
+      group={group}
+      onMove={onMove}
+      onSortStart={onSortStart}
+      className="repeat-marker-sortable"
+    >
+      <div
+        className="repeat-marker repeat-marker-edit"
+        data-sort-handle
+        aria-label="2ローテ目以降の開始位置"
+      >
+        <RepeatMarkerLabel />
+        <button
+          className="repeat-marker-remove"
+          data-sort-ignore
+          onClick={onRemove}
+          aria-label="繰り返し位置を削除"
+        >
+          ×
+        </button>
+      </div>
+    </SortableItem>
+  )
+}
+
+function RepeatMarkerView() {
+  return (
+    <div className="repeat-marker repeat-marker-view" aria-label="2ローテ目以降はここから">
+      <RepeatMarkerLabel />
+    </div>
+  )
+}
+
 // 「作成」→ キャラを選ぶ → そのままローテーション記録、まで1タブで完結するページ。
 // パーティは裏方のデータとして自動作成・再利用し、画面には独立した管理項目を出さない
 export default function RotationPage({ data, setData }: Props) {
@@ -403,17 +463,22 @@ export default function RotationPage({ data, setData }: Props) {
   const duplicateCombo = (id: string) => {
     const source = data.combos.find((item) => item.id === id)
     if (!source) return
+    const steps = source.steps.map((step) => ({
+      ...step,
+      id: newId(),
+      actions: step.actions.map((action) => ({ ...action, id: newId() })),
+    }))
+    const repeatFromIndex = source.steps.findIndex(
+      (step) => step.id === source.repeatFromStepId,
+    )
     const duplicate: Combo = {
       ...source,
       id: newId(),
       title: `${source.title}のコピー`,
       favorite: false,
       referenceUrls: source.referenceUrls ? [...source.referenceUrls] : undefined,
-      steps: source.steps.map((step) => ({
-        ...step,
-        id: newId(),
-        actions: step.actions.map((action) => ({ ...action, id: newId() })),
-      })),
+      repeatFromStepId: repeatFromIndex > 0 ? steps[repeatFromIndex]?.id : undefined,
+      steps,
       updatedAt: new Date().toISOString(),
     }
     const sourceIndex = data.combos.findIndex((item) => item.id === id)
@@ -1017,20 +1082,42 @@ function ComboEditor({
   const slotClass = (charId: string) =>
     `slot-${Math.max(0, party?.memberIds.indexOf(charId) ?? 0) % 3}`
   const buttonMap = data.buttonMap ?? {}
+  const repeatFromIndex = combo.steps.findIndex((step) => step.id === combo.repeatFromStepId)
+  const repeatFromStepId =
+    repeatFromIndex > 0 ? combo.steps[repeatFromIndex]?.id : undefined
+  const repeatSortGroup = `repeat-${combo.id}`
+
+  const updateSteps = (steps: ComboStep[], requestedRepeatFromStepId = repeatFromStepId) => {
+    const nextRepeatFromIndex = steps.findIndex(
+      (step) => step.id === requestedRepeatFromStepId,
+    )
+    onChange({
+      ...combo,
+      steps,
+      repeatFromStepId:
+        nextRepeatFromIndex > 0 ? steps[nextRepeatFromIndex]?.id : undefined,
+    })
+  }
 
   const setStep = (s: ComboStep) => {
-    onChange({ ...combo, steps: combo.steps.map((x) => (x.id === s.id ? s : x)) })
+    updateSteps(combo.steps.map((x) => (x.id === s.id ? s : x)))
   }
 
   const addStep = (characterId: string) => {
     const s: ComboStep = { id: newId(), characterId, actions: [] }
-    onChange({ ...combo, steps: [...combo.steps, s] })
+    updateSteps([...combo.steps, s])
     setActiveStepId(s.id)
     setActiveActionId(null)
   }
 
   const removeStep = (id: string) => {
-    onChange({ ...combo, steps: combo.steps.filter((x) => x.id !== id) })
+    const removedIndex = combo.steps.findIndex((step) => step.id === id)
+    const steps = combo.steps.filter((step) => step.id !== id)
+    const nextRepeatFromStepId =
+      repeatFromStepId === id && removedIndex > 0
+        ? steps[removedIndex]?.id
+        : repeatFromStepId
+    updateSteps(steps, nextRepeatFromStepId)
     if (activeStepId === id) setActiveStepId(null)
   }
 
@@ -1040,12 +1127,12 @@ function ComboEditor({
     if (i < 0 || j < 0 || j >= combo.steps.length) return
     const steps = [...combo.steps]
     ;[steps[i], steps[j]] = [steps[j], steps[i]]
-    onChange({ ...combo, steps })
+    updateSteps(steps)
   }
 
   const reorderStep = (sourceId: string, targetId: string) => {
     const steps = moveItemTo(combo.steps, sourceId, targetId)
-    if (steps !== combo.steps) onChange({ ...combo, steps })
+    if (steps !== combo.steps) updateSteps(steps)
   }
 
   const duplicateStep = (id: string) => {
@@ -1059,9 +1146,25 @@ function ComboEditor({
     }
     const steps = [...combo.steps]
     steps.splice(sourceIndex + 1, 0, duplicate)
-    onChange({ ...combo, steps })
+    updateSteps(steps)
     setActiveStepId(duplicate.id)
     setActiveActionId(null)
+  }
+
+  const moveRepeatMarker = (_sourceId: string, targetId: string) => {
+    const targetIndex = combo.steps.findIndex((step) => step.id === targetId)
+    if (targetIndex <= 0) return
+    onChange({ ...combo, repeatFromStepId: targetId })
+  }
+
+  const addRepeatMarker = () => {
+    const firstRepeatStep = combo.steps[1]
+    if (!firstRepeatStep) return
+    onChange({ ...combo, repeatFromStepId: firstRepeatStep.id })
+  }
+
+  const removeRepeatMarker = () => {
+    onChange({ ...combo, repeatFromStepId: undefined })
   }
 
   const appendAction = (step: ComboStep, actionId: string) => {
@@ -1191,59 +1294,62 @@ function ComboEditor({
                   }
                 })
               return (
-                <div key={s.id} className="view-step">
-                  <div className="view-line">
-                    <span className={`view-char ${slotClass(s.characterId)}`}>
-                      <Avatar character={ch} size={32} />
-                      {ch?.name}
-                    </span>
-                    {command ? (
-                      <span className="view-actions command-seq">
-                        {s.actions.map((a, i) => (
-                          <span key={a.id} className="cmd-pair">
-                            {i > 0 && <span className="cmd-arrow">→</span>}
-                            <span className="cmd-btn">
-                              {buttonOf(a, ch) ??
-                                ch?.actions.find((x) => x.id === a.actionId)?.name ??
-                                '?'}
+                <Fragment key={s.id}>
+                  {repeatFromStepId === s.id && <RepeatMarkerView />}
+                  <div className="view-step">
+                    <div className="view-line">
+                      <span className={`view-char ${slotClass(s.characterId)}`}>
+                        <Avatar character={ch} size={32} />
+                        {ch?.name}
+                      </span>
+                      {command ? (
+                        <span className="view-actions command-seq">
+                          {s.actions.map((a, i) => (
+                            <span key={a.id} className="cmd-pair">
+                              {i > 0 && <span className="cmd-arrow">→</span>}
+                              <span className="cmd-btn">
+                                {buttonOf(a, ch) ??
+                                  ch?.actions.find((x) => x.id === a.actionId)?.name ??
+                                  '?'}
+                              </span>
                             </span>
-                          </span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="view-actions">
+                          {s.actions.map((a, i) => (
+                            <Fragment key={a.id}>
+                              {i > 0 && <span className="view-sep"> / </span>}
+                              <ActionText
+                                action={a}
+                                character={ch}
+                                buttonMap={buttonMap}
+                                noteNumber={actionNoteNumber(s.actions, a.id)}
+                              />
+                            </Fragment>
+                          ))}
+                        </span>
+                      )}
+                    </div>
+                    {!command && (Boolean(s.note) || numberedActionNotes.length > 0) && (
+                      <div className="view-points">
+                        {s.note && (
+                          <div className="view-note">
+                            <span className="note-reference">※</span> {s.note}
+                          </div>
+                        )}
+                        {numberedActionNotes.map((point) => (
+                          <div key={point.id} className="view-note">
+                            <span className="note-reference">
+                              ※<sup>{point.number}</sup>
+                            </span>{' '}
+                            {point.text}
+                          </div>
                         ))}
-                      </span>
-                    ) : (
-                      <span className="view-actions">
-                        {s.actions.map((a, i) => (
-                          <Fragment key={a.id}>
-                            {i > 0 && <span className="view-sep"> / </span>}
-                            <ActionText
-                              action={a}
-                              character={ch}
-                              buttonMap={buttonMap}
-                              noteNumber={actionNoteNumber(s.actions, a.id)}
-                            />
-                          </Fragment>
-                        ))}
-                      </span>
+                      </div>
                     )}
                   </div>
-                  {!command && (Boolean(s.note) || numberedActionNotes.length > 0) && (
-                    <div className="view-points">
-                      {s.note && (
-                        <div className="view-note">
-                          <span className="note-reference">※</span> {s.note}
-                        </div>
-                      )}
-                      {numberedActionNotes.map((point) => (
-                        <div key={point.id} className="view-note">
-                          <span className="note-reference">
-                            ※<sup>{point.number}</sup>
-                          </span>{' '}
-                          {point.text}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                </Fragment>
               )
             })}
           </div>
@@ -1309,18 +1415,38 @@ function ComboEditor({
         const ch = charOf(s.characterId)
         const active = activeStepId === s.id
         return (
-          <SortableItem
-            key={s.id}
-            id={s.id}
-            group={`steps-${combo.id}`}
-            onMove={reorderStep}
-            onSortStart={() => {
-              setActiveStepId(null)
-              setActiveActionId(null)
-            }}
-            className="step-sortable"
-          >
-            <div className={`card step-card ${active ? 'active' : ''}`}>
+          <Fragment key={s.id}>
+            {si > 0 && (
+              <div
+                className={`repeat-drop-zone ${repeatFromStepId === s.id ? 'has-marker' : ''}`}
+                data-sort-id={s.id}
+                data-sort-group={repeatSortGroup}
+              >
+                {repeatFromStepId === s.id && (
+                  <EditableRepeatMarker
+                    stepId={s.id}
+                    group={repeatSortGroup}
+                    onMove={moveRepeatMarker}
+                    onRemove={removeRepeatMarker}
+                    onSortStart={() => {
+                      setActiveStepId(null)
+                      setActiveActionId(null)
+                    }}
+                  />
+                )}
+              </div>
+            )}
+            <SortableItem
+              id={s.id}
+              group={`steps-${combo.id}`}
+              onMove={reorderStep}
+              onSortStart={() => {
+                setActiveStepId(null)
+                setActiveActionId(null)
+              }}
+              className="step-sortable"
+            >
+              <div className={`card step-card ${active ? 'active' : ''}`}>
               <div className="step-head">
                 <button
                   className={`step-char ${slotClass(s.characterId)}`}
@@ -1484,10 +1610,17 @@ function ComboEditor({
                   onChange={(e) => setStep({ ...s, note: e.target.value })}
                 />
               )}
-            </div>
-          </SortableItem>
+              </div>
+            </SortableItem>
+          </Fragment>
         )
       })}
+
+      {!repeatFromStepId && combo.steps.length > 1 && (
+        <button className="repeat-marker-add" onClick={addRepeatMarker}>
+          <span aria-hidden="true">↻</span> 繰り返し位置を追加
+        </button>
+      )}
 
       <div className="card add-step-card">
         <div className="hint">行を追加</div>

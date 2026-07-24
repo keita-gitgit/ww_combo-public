@@ -1068,6 +1068,141 @@ body.sorting-active {
   justify-content: flex-end;
 }
 
+.repeat-drop-zone {
+  position: relative;
+  z-index: 3;
+  height: 0;
+}
+
+.repeat-drop-zone::before {
+  position: absolute;
+  top: -10px;
+  right: 0;
+  left: 0;
+  height: 20px;
+  pointer-events: none;
+  content: "";
+}
+
+body.sorting-active .repeat-drop-zone::before {
+  pointer-events: auto;
+}
+
+.repeat-drop-zone.sort-drop-target::after {
+  position: absolute;
+  top: -1px;
+  right: 8px;
+  left: 8px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.42);
+  content: "";
+}
+
+.repeat-drop-zone.has-marker {
+  height: 34px;
+  margin: 0 0 9px;
+}
+
+.repeat-drop-zone.has-marker::before {
+  inset: -4px 0;
+  height: auto;
+}
+
+.repeat-marker-sortable {
+  height: 100%;
+}
+
+.repeat-marker {
+  display: flex;
+  min-width: 0;
+  min-height: 28px;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.repeat-marker-line {
+  min-width: 12px;
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.45));
+}
+
+.repeat-marker-line:nth-last-of-type(1) {
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.45), transparent);
+}
+
+.repeat-marker-label {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.repeat-marker-edit {
+  height: 100%;
+  padding-left: 4px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.repeat-marker-remove {
+  display: grid;
+  width: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  place-items: center;
+  padding: 0;
+  border-color: transparent;
+  border-radius: 50%;
+  color: var(--sub);
+  background: transparent;
+  font-size: 1rem;
+}
+
+.repeat-marker-remove:hover {
+  color: var(--danger);
+  background: var(--surface-soft);
+}
+
+.repeat-marker-sortable.sorting .repeat-marker-edit {
+  padding: 3px 4px 3px 10px;
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.42),
+    0 0 0 2px rgba(var(--accent-rgb), 0.12);
+  cursor: grabbing;
+  filter: brightness(1.05);
+}
+
+.repeat-marker-add {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 2px auto 8px;
+  padding: 6px 13px;
+  border-color: transparent;
+  border-radius: var(--radius-pill);
+  color: var(--sub);
+  background: transparent;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.repeat-marker-add:hover {
+  color: var(--accent);
+  background: var(--surface-soft);
+}
+
 .step-card {
   padding: 12px;
   transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
@@ -1643,6 +1778,12 @@ body.sorting-active {
 
 .display-content .view-steps {
   gap: calc(8px * var(--display-scale));
+}
+
+.display-content .repeat-marker-view {
+  min-height: calc(24px * var(--display-scale));
+  gap: calc(7px * var(--display-scale));
+  font-size: calc(0.72rem * var(--display-scale));
 }
 
 .display-content .view-step {

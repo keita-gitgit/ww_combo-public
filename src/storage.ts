@@ -152,6 +152,7 @@ function isCombo(value: unknown): value is Combo {
     isOptionalBoolean(value.favorite) &&
     isOptionalCardTone(value.cardTone) &&
     isOptionalCommandScale(value.commandScale) &&
+    isOptionalString(value.repeatFromStepId) &&
     isOptionalString(value.memo) &&
     (referenceUrls === undefined ||
       (isStringArray(referenceUrls, MAX_REFERENCE_URLS) &&

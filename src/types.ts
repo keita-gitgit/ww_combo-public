@@ -75,6 +75,8 @@ export interface Combo {
   cardTone?: ComboCardTone
   /** 技名・コマンド閲覧画面の表示倍率（0.6〜1.2） */
   commandScale?: number
+  /** 2ローテ目以降の開始行。未設定なら先頭から全体を繰り返す */
+  repeatFromStepId?: string
   memo?: string
   /** 参考にした動画・投稿のURL（最大20件） */
   referenceUrls?: string[]
