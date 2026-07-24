@@ -18,7 +18,6 @@ import type {
   SavedEchoLoadout,
   SavedEchoScore,
 } from './types'
-import { ECHO_BY_ID } from './echoData'
 import { makeSeedData, syncRoster, DEFAULT_BUTTON_MAP } from './seed'
 import {
   ECHO_SCORE_FORMULA_VERSION,
@@ -68,6 +67,7 @@ const ECHO_SCORE_FORMULA_VERSIONS = new Set<EchoScoreFormulaVersion>([
   'generic-v1',
   'character-v2',
   'character-v3',
+  'character-v4',
 ])
 const ECHO_STAT_IDS = new Set<EchoStatId>([
   'hp',
@@ -450,16 +450,9 @@ function migrateEchoScoringFormula(data: AppData): AppData {
   const echoLoadouts = records.map((record) => {
     const characterName = characterNames.get(record.characterId)
     if (!characterName || !getCharacterEchoScoreWeights(characterName)) return record
-    const costs = record.slots.map((slot) => ECHO_BY_ID.get(slot.echoId)?.cost)
-    if (costs.some((cost) => !cost)) return record
 
-    const slots = record.slots.map((slot, index) => {
-      const score = calculateCharacterEchoScore(
-        slot.substats,
-        characterName,
-        costs[index],
-        slot.mainStatId,
-      ).total
+    const slots = record.slots.map((slot) => {
+      const score = calculateCharacterEchoScore(slot.substats, characterName).total
       return {
         ...slot,
         score,

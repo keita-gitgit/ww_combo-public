@@ -134,12 +134,8 @@ function getSlotScore(
   characterName?: string,
 ): number {
   if (characterName && getCharacterEchoScoreWeights(characterName)) {
-    return calculateCharacterEchoScore(
-      validDraftSubstats(slot.substats),
-      characterName,
-      slot.cost || undefined,
-      slot.mainStatId || undefined,
-    ).total
+    return calculateCharacterEchoScore(validDraftSubstats(slot.substats), characterName)
+      .total
   }
   return calculateEchoScore(validDraftSubstats(slot.substats), profile)
 }
@@ -211,12 +207,7 @@ export default function EchoScorePage({ data, setData }: Props) {
   const selectedWeights = getCharacterEchoScoreWeights(selectedCharacter?.name)
   const activeSubstats = validDraftSubstats(activeSlot.substats)
   const activeBreakdown = selectedCharacter && selectedWeights
-    ? calculateCharacterEchoScore(
-        activeSubstats,
-        selectedCharacter.name,
-        activeSlot.cost || undefined,
-        activeSlot.mainStatId || undefined,
-      )
+    ? calculateCharacterEchoScore(activeSubstats, selectedCharacter.name)
     : undefined
   const activeScore = getSlotScore(
     activeSlot,
@@ -562,7 +553,7 @@ export default function EchoScorePage({ data, setData }: Props) {
               </small>
             ))}
           </div>
-          <p>表示のないステータスは0点。メインは適性に応じて0〜15点加算します。</p>
+          <p>表示のないステータスは0点。スコアはサブステータスのみで計算します。</p>
         </section>
       )}
 
@@ -841,10 +832,9 @@ export default function EchoScorePage({ data, setData }: Props) {
             </strong>
             <b>{activeSubstats.length > 0 ? activeRank : '—'}</b>
           </span>
-          {activeBreakdown && activeSlot.mainStatId && (
+          {activeBreakdown && activeSubstats.length > 0 && (
             <small>
-              メイン {formatEchoScore(activeBreakdown.mainStatScore)} ＋ サブ{' '}
-              {formatEchoScore(activeBreakdown.substatScore)}
+              サブステータス合計 {formatEchoScore(activeBreakdown.substatScore)}
             </small>
           )}
         </div>

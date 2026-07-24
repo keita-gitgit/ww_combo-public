@@ -23,7 +23,11 @@ export type EchoScoreProfile = 'attack' | 'hp' | 'defense' | 'energy'
 
 export type EchoScoreRank = 'SS' | 'S' | 'A' | 'B' | 'C' | 'D'
 
-export type EchoScoreFormulaVersion = 'generic-v1' | 'character-v2' | 'character-v3'
+export type EchoScoreFormulaVersion =
+  | 'generic-v1'
+  | 'character-v2'
+  | 'character-v3'
+  | 'character-v4'
 
 export type EchoStatId =
   | 'hp'

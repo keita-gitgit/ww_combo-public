@@ -14,7 +14,7 @@ import type {
   EchoStatId,
 } from './types'
 
-export const ECHO_SCORE_FORMULA_VERSION = 'character-v3' as const
+export const ECHO_SCORE_FORMULA_VERSION = 'character-v4' as const
 
 export const ECHO_SCORE_PROFILES: ReadonlyArray<{
   id: EchoScoreProfile
@@ -36,7 +36,6 @@ export interface EchoScoreContribution extends EchoScoreStat {
 }
 
 export interface EchoScoreBreakdown {
-  mainStatScore: number
   substatScore: number
   total: number
   contributions: EchoScoreContribution[]
@@ -92,8 +91,6 @@ function floorToTwoDecimals(value: number): number {
 export function calculateCharacterEchoScore(
   substats: readonly EchoScoreStat[],
   characterName: string,
-  cost?: EchoCost,
-  mainStatId?: EchoStatId,
 ): EchoScoreBreakdown {
   const weights = getCharacterEchoScoreWeights(characterName)
   const contributions = substats.map((stat) => {
@@ -104,17 +101,13 @@ export function calculateCharacterEchoScore(
       score: floorToTwoDecimals(stat.value * weight),
     }
   })
-  const mainStatWeight =
-    weights && cost && mainStatId ? (weights.mainStats[cost][mainStatId] ?? 0) : 0
-  const mainStatScore = 15 * mainStatWeight
   const substatScore = contributions.reduce(
     (total, contribution) => total + contribution.score,
     0,
   )
   return {
-    mainStatScore,
     substatScore,
-    total: Math.round(mainStatScore + substatScore),
+    total: Math.round(substatScore),
     contributions,
   }
 }
