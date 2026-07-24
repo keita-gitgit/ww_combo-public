@@ -791,9 +791,6 @@ function SwipeableComboCard({
           </span>
           <span className="row-card-text">
             <span className="card-title">{combo.title}</span>
-            <span className="card-sub">
-              {members.map((member) => member.name).join(' / ')} ・ {combo.steps.length}行
-            </span>
           </span>
         </button>
         <span className="card-quick-actions" data-sort-ignore>
