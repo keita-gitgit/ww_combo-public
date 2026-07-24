@@ -63,7 +63,7 @@ export const CHARACTER_ECHO_SCORE_WEIGHTS: Readonly<Record<string, CharacterEcho
   "レベッカ": { substats: {"critRate":2,"critDamage":1,"basicAttackDamage":1,"energyRegen":0.5,"attackPercent":1,"attack":0.05}, mainStats: { 1: {"attackPercent":1}, 3: {"energyRegen":1,"attackPercent":1,"electroDamage":1}, 4: {"critRate":1,"critDamage":1,"attackPercent":1} } },
   "ルーシー": { substats: {"critRate":2,"critDamage":1,"heavyAttackDamage":1,"energyRegen":0.5,"attackPercent":1,"attack":0.05}, mainStats: { 1: {"attackPercent":1}, 3: {"energyRegen":1,"attackPercent":1,"spectroDamage":1}, 4: {"critRate":1,"critDamage":1,"attackPercent":1} } },
   "ルシラー": { substats: {"critRate":2,"critDamage":1,"basicAttackDamage":1,"attackPercent":1.25,"attack":0.05}, mainStats: { 1: {"attackPercent":1}, 3: {"attackPercent":1,"glacioDamage":1}, 4: {"critRate":1,"critDamage":1,"attackPercent":1} } },
-  "秧秧・玄翎": { substats: {"critRate":2,"critDamage":1,"heavyAttackDamage":1,"energyRegen":0.5,"attackPercent":1,"attack":0.05}, mainStats: { 1: {"attackPercent":1}, 3: {"energyRegen":1,"attackPercent":1,"havocDamage":1}, 4: {"critRate":1,"critDamage":1,"attackPercent":1} } },
+  "秧秧・玄翎": { substats: {"critRate":2,"critDamage":1,"heavyAttackDamage":1,"attackPercent":1,"attack":0.05}, mainStats: { 1: {"attackPercent":1}, 3: {"attackPercent":1,"havocDamage":1}, 4: {"critRate":1,"critDamage":1,"attackPercent":1} } },
   "漂泊者（電導）": { substats: {"critRate":2,"critDamage":1,"resonanceLiberationDamage":0.5,"resonanceSkillDamage":1,"energyRegen":0.5,"attackPercent":1,"attack":0.05}, mainStats: { 1: {"attackPercent":1}, 3: {"energyRegen":1,"attackPercent":1,"electroDamage":1}, 4: {"critRate":1,"critDamage":1,"attackPercent":1} } },
 }
 
@@ -72,3 +72,14 @@ export const ECHO_SCORE_WEIGHT_SOURCE = {
   url: 'https://gamewith.jp/wutheringwaves/451843',
   retrievedAt: '2026-07-24',
 } as const
+
+export const ECHO_SCORE_WEIGHT_OVERRIDES = [
+  {
+    characterName: '秧秧・玄翎',
+    statId: 'energyRegen',
+    weight: 0,
+    reason: '個別攻略ページの推奨音骸・サブステータスに共鳴効率が含まれないため',
+    sourceUrl: 'https://gamewith.jp/wutheringwaves/563870',
+    checkedAt: '2026-07-24',
+  },
+] as const

@@ -67,6 +67,7 @@ const ECHO_SCORE_RANKS = new Set<EchoScoreRank>(['SS', 'S', 'A', 'B', 'C', 'D'])
 const ECHO_SCORE_FORMULA_VERSIONS = new Set<EchoScoreFormulaVersion>([
   'generic-v1',
   'character-v2',
+  'character-v3',
 ])
 const ECHO_STAT_IDS = new Set<EchoStatId>([
   'hp',
@@ -347,7 +348,7 @@ function isEchoLoadout(value: unknown): value is SavedEchoLoadout {
   if (slotIds.size !== value.slots.length || slotPositions.size !== value.slots.length) return false
   const profile = value.scoreProfile as EchoScoreProfile
   const slotsAreConsistent =
-    value.formulaVersion === 'character-v2' ||
+    value.formulaVersion !== 'generic-v1' ||
     value.slots.every((slot) => {
       const expectedScore = calculateEchoScore(slot.substats, profile)
       return (

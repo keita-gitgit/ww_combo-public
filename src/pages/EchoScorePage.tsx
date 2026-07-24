@@ -220,7 +220,7 @@ export default function EchoScorePage({ data, setData }: Props) {
   )
   const activeRank = getEchoScoreRank(
     activeScore,
-    selectedWeights ? 'character-v2' : 'generic-v1',
+    selectedWeights ? ECHO_SCORE_FORMULA_VERSION : 'generic-v1',
   )
   const completedSlots = draft.slots.filter(isCompleteSlot)
   const totalScore = getLoadoutTotal(
@@ -372,7 +372,7 @@ export default function EchoScorePage({ data, setData }: Props) {
         score,
         rank: getEchoScoreRank(
           score,
-          selectedWeights ? 'character-v2' : 'generic-v1',
+          selectedWeights ? ECHO_SCORE_FORMULA_VERSION : 'generic-v1',
         ),
       }
     })

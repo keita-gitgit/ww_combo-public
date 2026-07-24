@@ -6,6 +6,7 @@ import {
 import type {
   EchoCost,
   EchoMainStatRule,
+  EchoScoreFormulaVersion,
   EchoScoreProfile,
   EchoScoreRank,
   EchoScoreStat,
@@ -13,7 +14,7 @@ import type {
   EchoStatId,
 } from './types'
 
-export const ECHO_SCORE_FORMULA_VERSION = 'character-v2' as const
+export const ECHO_SCORE_FORMULA_VERSION = 'character-v3' as const
 
 export const ECHO_SCORE_PROFILES: ReadonlyArray<{
   id: EchoScoreProfile
@@ -120,9 +121,9 @@ export function calculateCharacterEchoScore(
 
 export function getEchoScoreRank(
   score: number,
-  formulaVersion: 'generic-v1' | 'character-v2' = 'character-v2',
+  formulaVersion: EchoScoreFormulaVersion = ECHO_SCORE_FORMULA_VERSION,
 ): EchoScoreRank {
-  if (formulaVersion === 'character-v2') {
+  if (formulaVersion !== 'generic-v1') {
     if (score >= 65) return 'SS'
     if (score >= 45) return 'S'
     if (score >= 25) return 'A'
