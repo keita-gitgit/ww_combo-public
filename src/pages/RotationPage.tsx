@@ -28,6 +28,7 @@ const SORT_CLICK_GUARD_MS = 500
 const DISPLAY_SCALE_MIN = 0.6
 const DISPLAY_SCALE_MAX = 1.2
 const DISPLAY_SCALE_STEP = 0.1
+const PENDING_REPEAT_MARKER_ID = 'repeat-marker-at-end'
 const CARD_TONE_OPTIONS: Array<{ value: '' | ComboCardTone; label: string }> = [
   { value: '', label: '標準' },
   { value: '焦熱', label: '焦熱・赤' },
@@ -1072,6 +1073,17 @@ function ComboEditor({
   const [activeActionId, setActiveActionId] = useState<string | null>(null)
   const [organizing, setOrganizing] = useState(false)
   const [changingMembers, setChangingMembers] = useState(false)
+  const [repeatMarkerPendingAtEnd, setRepeatMarkerPendingAtEnd] = useState(false)
+
+  useEffect(() => {
+    setRepeatMarkerPendingAtEnd(false)
+  }, [combo.id])
+
+  useEffect(() => {
+    if (combo.repeatFromStepId || combo.steps.length < 2) {
+      setRepeatMarkerPendingAtEnd(false)
+    }
+  }, [combo.repeatFromStepId, combo.steps.length])
 
   const party = data.parties.find((p) => p.id === combo.partyId)
   const members = (party?.memberIds ?? [])
@@ -1154,16 +1166,19 @@ function ComboEditor({
   const moveRepeatMarker = (_sourceId: string, targetId: string) => {
     const targetIndex = combo.steps.findIndex((step) => step.id === targetId)
     if (targetIndex <= 0) return
+    setRepeatMarkerPendingAtEnd(false)
     onChange({ ...combo, repeatFromStepId: targetId })
   }
 
   const addRepeatMarker = () => {
-    const firstRepeatStep = combo.steps[1]
-    if (!firstRepeatStep) return
-    onChange({ ...combo, repeatFromStepId: firstRepeatStep.id })
+    if (combo.steps.length < 2) return
+    setRepeatMarkerPendingAtEnd(true)
+    setActiveStepId(null)
+    setActiveActionId(null)
   }
 
   const removeRepeatMarker = () => {
+    setRepeatMarkerPendingAtEnd(false)
     onChange({ ...combo, repeatFromStepId: undefined })
   }
 
@@ -1616,7 +1631,22 @@ function ComboEditor({
         )
       })}
 
-      {!repeatFromStepId && combo.steps.length > 1 && (
+      {repeatMarkerPendingAtEnd && !repeatFromStepId && combo.steps.length > 1 && (
+        <div className="repeat-drop-zone repeat-drop-zone-end has-marker">
+          <EditableRepeatMarker
+            stepId={PENDING_REPEAT_MARKER_ID}
+            group={repeatSortGroup}
+            onMove={moveRepeatMarker}
+            onRemove={() => setRepeatMarkerPendingAtEnd(false)}
+            onSortStart={() => {
+              setActiveStepId(null)
+              setActiveActionId(null)
+            }}
+          />
+        </div>
+      )}
+
+      {!repeatFromStepId && !repeatMarkerPendingAtEnd && combo.steps.length > 1 && (
         <button className="repeat-marker-add" onClick={addRepeatMarker}>
           <span aria-hidden="true">↻</span> 繰り返し位置を追加
         </button>
