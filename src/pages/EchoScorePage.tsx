@@ -14,6 +14,7 @@ import {
 } from '../echoScoring'
 import type {
   AppData,
+  EchoCost,
   EchoLoadoutSlot,
   EchoScoreProfile,
   EchoScoreStat,
@@ -35,6 +36,7 @@ interface DraftSubstat {
 interface SlotDraft {
   id: string
   position: 1 | 2 | 3 | 4 | 5
+  cost: EchoCost | ''
   echoId: string
   sonataId: string
   mainStatId: EchoStatId | ''
@@ -58,6 +60,7 @@ function makeBlankSlot(position: SlotDraft['position']): SlotDraft {
   return {
     id: newId(),
     position,
+    cost: '',
     echoId: '',
     sonataId: '',
     mainStatId: '',
@@ -84,6 +87,7 @@ function draftFromRecord(record: SavedEchoLoadout): LoadoutDraft {
       return {
         id: slot.id,
         position,
+        cost: ECHO_BY_ID.get(slot.echoId)?.cost ?? '',
         echoId: slot.echoId,
         sonataId: slot.sonataId,
         mainStatId: slot.mainStatId,
@@ -104,7 +108,8 @@ function validDraftSubstats(substats: DraftSubstat[]): EchoScoreStat[] {
 
 function hasSlotData(slot: SlotDraft): boolean {
   return Boolean(
-    slot.echoId ||
+    slot.cost ||
+      slot.echoId ||
       slot.sonataId ||
       slot.mainStatId ||
       slot.substats.some((stat) => stat.id || stat.value !== ''),
@@ -113,7 +118,8 @@ function hasSlotData(slot: SlotDraft): boolean {
 
 function isCompleteSlot(slot: SlotDraft): boolean {
   return Boolean(
-    slot.echoId &&
+    slot.cost &&
+      slot.echoId &&
       slot.sonataId &&
       slot.mainStatId &&
       validDraftSubstats(slot.substats).length === 5,
@@ -152,8 +158,15 @@ function getSonataSummary(
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ja'))
 }
 
-function getTotalCost(slots: ReadonlyArray<Pick<SlotDraft | EchoLoadoutSlot, 'echoId'>>) {
+function getSavedTotalCost(slots: ReadonlyArray<Pick<EchoLoadoutSlot, 'echoId'>>) {
   return slots.reduce((total, slot) => total + (ECHO_BY_ID.get(slot.echoId)?.cost ?? 0), 0)
+}
+
+function getDraftTotalCost(slots: readonly SlotDraft[]) {
+  return slots.reduce(
+    (total, slot) => total + (slot.cost || ECHO_BY_ID.get(slot.echoId)?.cost || 0),
+    0,
+  )
 }
 
 export default function EchoScorePage({ data, setData }: Props) {
@@ -175,7 +188,7 @@ export default function EchoScorePage({ data, setData }: Props) {
   const activeRank = getEchoScoreRank(activeScore)
   const completedSlots = draft.slots.filter(isCompleteSlot)
   const totalScore = getLoadoutTotal(draft.slots, draft.scoreProfile)
-  const totalCost = getTotalCost(draft.slots)
+  const totalCost = getDraftTotalCost(draft.slots)
   const sonataSummary = getSonataSummary(draft.slots)
   const hasIncompleteSlot = draft.slots.some(
     (slot) => hasSlotData(slot) && !isCompleteSlot(slot),
@@ -194,16 +207,18 @@ export default function EchoScorePage({ data, setData }: Props) {
   })
 
   const echoResults = useMemo(() => {
+    if (!activeSlot.cost) return []
     const normalized = normalizeEchoOcrText(echoQuery)
+    const echoesForCost = ECHOES.filter((echo) => echo.cost === activeSlot.cost)
     const candidates = normalized
-      ? ECHOES.filter((echo) =>
+      ? echoesForCost.filter((echo) =>
           [echo.name, ...(echo.aliases ?? [])].some((name) =>
             normalizeEchoOcrText(name).includes(normalized),
           ),
         )
-      : [...ECHOES].sort((a, b) => b.sourceId - a.sourceId)
+      : [...echoesForCost].sort((a, b) => b.sourceId - a.sourceId)
     return candidates.slice(0, normalized ? 12 : 8)
-  }, [echoQuery])
+  }, [activeSlot.cost, echoQuery])
 
   const setActiveSlot = (nextSlot: SlotDraft) => {
     setDraft((current) => ({
@@ -256,11 +271,24 @@ export default function EchoScorePage({ data, setData }: Props) {
     const echo = ECHO_BY_ID.get(echoId)
     if (!echo) return
     updateActiveSlot({
+      cost: echo.cost,
       echoId,
       sonataId: echo.sonataIds[0] ?? '',
       mainStatId: '',
     })
     setEchoQuery(echo.name)
+    setShowEchoResults(false)
+  }
+
+  const selectCost = (cost: EchoCost | '') => {
+    const keepEcho = Boolean(selectedEcho && selectedEcho.cost === cost)
+    updateActiveSlot({
+      cost,
+      echoId: keepEcho ? activeSlot.echoId : '',
+      sonataId: keepEcho ? activeSlot.sonataId : '',
+      mainStatId: keepEcho ? activeSlot.mainStatId : '',
+    })
+    if (!keepEcho) setEchoQuery('')
     setShowEchoResults(false)
   }
 
@@ -360,7 +388,7 @@ export default function EchoScorePage({ data, setData }: Props) {
                 (candidate) => candidate.id === record.characterId,
               )
               const summary = getSonataSummary(record.slots)
-              const cost = getTotalCost(record.slots)
+              const cost = getSavedTotalCost(record.slots)
               return (
                 <div key={record.id} className="card echo-record-card">
                   <button className="echo-record-open" onClick={() => beginEdit(record)}>
@@ -492,7 +520,9 @@ export default function EchoScorePage({ data, setData }: Props) {
                 onClick={() => switchSlot(index)}
               >
                 <span>{slot.position}</span>
-                <small>{echo ? `C${echo.cost}` : '未設定'}</small>
+                <small>
+                  {slot.cost ? `C${slot.cost}` : echo ? `C${echo.cost}` : '未設定'}
+                </small>
                 {isCompleteSlot(slot) && <b>{slotScore.toFixed(1)}</b>}
               </button>
             )
@@ -523,10 +553,27 @@ export default function EchoScorePage({ data, setData }: Props) {
 
       <section className="card echo-form-section echo-slot-editor">
         <div className="echo-section-title">
-          <h3>
-            音骸 {activeSlot.position}
-            {activeSlot.position === 1 && <small> メイン</small>}
-          </h3>
+          <div className="echo-slot-title">
+            <h3>
+              音骸 {activeSlot.position}
+              {activeSlot.position === 1 && <small> メイン</small>}
+            </h3>
+            <select
+              className="echo-cost-select"
+              value={activeSlot.cost}
+              onChange={(event) =>
+                selectCost(
+                  event.target.value === '' ? '' : (Number(event.target.value) as EchoCost),
+                )
+              }
+              aria-label={`音骸${activeSlot.position}のCOST`}
+            >
+              <option value="">COST</option>
+              <option value="1">C1</option>
+              <option value="3">C3</option>
+              <option value="4">C4</option>
+            </select>
+          </div>
           {hasSlotData(activeSlot) && (
             <button className="echo-clear-slot" onClick={clearSlot}>
               入力を消去
@@ -540,9 +587,10 @@ export default function EchoScorePage({ data, setData }: Props) {
             <input
               id="echo-name-search"
               value={echoQuery}
-              placeholder="音骸名で検索"
+              placeholder={activeSlot.cost ? `C${activeSlot.cost}の音骸名で検索` : '先にCOSTを選択'}
               autoComplete="off"
-              onFocus={() => setShowEchoResults(true)}
+              disabled={!activeSlot.cost}
+              onFocus={() => activeSlot.cost && setShowEchoResults(true)}
               onBlur={() => window.setTimeout(() => setShowEchoResults(false), 120)}
               onChange={(event) => {
                 setEchoQuery(event.target.value)
@@ -550,7 +598,7 @@ export default function EchoScorePage({ data, setData }: Props) {
                 updateActiveSlot({ echoId: '', sonataId: '', mainStatId: '' })
               }}
             />
-            {showEchoResults && (
+            {showEchoResults && activeSlot.cost && (
               <div className="echo-search-results" role="listbox" aria-label="音骸の候補">
                 {echoResults.length === 0 ? (
                   <span className="echo-search-empty">該当する音骸がありません</span>

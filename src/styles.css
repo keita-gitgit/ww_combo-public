@@ -2402,6 +2402,29 @@ body.sorting-active .repeat-drop-zone::before {
   gap: 13px;
 }
 
+.echo-slot-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.echo-slot-title h3 {
+  flex: 0 1 auto;
+  white-space: nowrap;
+}
+
+.echo-cost-select {
+  width: 76px;
+  min-height: 34px;
+  padding: 5px 24px 5px 9px;
+  border-color: var(--accent-line);
+  color: var(--accent);
+  background-color: var(--accent-soft);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
 .echo-slot-editor .echo-section-title h3 small {
   color: var(--accent);
   font-size: 0.6875rem;
