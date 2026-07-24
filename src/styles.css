@@ -2506,6 +2506,137 @@ body.sorting-active .repeat-drop-zone::before {
   font-size: 0.6875rem;
 }
 
+.echo-ocr-import {
+  display: grid;
+  gap: 7px;
+}
+
+.echo-ocr-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  overflow: hidden;
+}
+
+.echo-ocr-button {
+  display: grid;
+  width: 100%;
+  min-height: 58px;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-color: var(--accent-line);
+  color: var(--text);
+  background:
+    linear-gradient(135deg, rgba(var(--accent-rgb), 0.09), transparent 58%),
+    var(--surface-soft);
+  text-align: left;
+}
+
+.echo-ocr-button > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.echo-ocr-button strong {
+  color: var(--label-text);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.echo-ocr-button small {
+  overflow: hidden;
+  color: var(--sub);
+  font-size: 0.625rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.echo-ocr-icon {
+  width: 34px;
+  height: 34px;
+  padding: 7px;
+  border: 1px solid var(--accent-line);
+  border-radius: 50%;
+  color: var(--accent);
+  background: var(--accent-soft);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.echo-ocr-feedback {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--sub);
+  background: var(--surface-soft);
+  overflow: hidden;
+}
+
+.echo-ocr-feedback[data-kind='success'] {
+  border-color: var(--accent-line);
+  color: var(--label-text);
+  background: var(--accent-soft);
+}
+
+.echo-ocr-feedback[data-kind='warning'],
+.echo-ocr-feedback[data-kind='error'] {
+  border-color: rgba(var(--danger-rgb), 0.3);
+}
+
+.echo-ocr-feedback[data-kind='error'] {
+  color: var(--danger);
+}
+
+.echo-ocr-feedback p {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+}
+
+.echo-ocr-feedback ul {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding-left: 1.25em;
+  color: var(--sub);
+  font-size: 0.625rem;
+  line-height: 1.45;
+}
+
+.echo-ocr-progress {
+  --ocr-progress: 0;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--accent-soft), transparent);
+  transform: scaleX(var(--ocr-progress));
+  transform-origin: left center;
+  transition: transform 180ms ease-out;
+}
+
+.echo-ocr-privacy {
+  padding: 0 3px;
+  color: var(--sub-dim);
+  font-size: 0.625rem;
+}
+
 .echo-substat-heading {
   margin-top: 3px;
   padding-top: 12px;

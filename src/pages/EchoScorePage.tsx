@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import Avatar from '../components/Avatar'
 import { ECHO_BY_ID, ECHOES, SONATA_BY_ID, normalizeEchoOcrText } from '../echoData'
+import { recognizeEchoScreenshot } from '../echoScreenshotOcr'
 import {
   ECHO_SCORE_FORMULA_VERSION,
   ECHO_SCORE_PROFILES,
@@ -52,7 +53,15 @@ interface LoadoutDraft {
   slots: SlotDraft[]
 }
 
+interface OcrFeedback {
+  kind: 'progress' | 'success' | 'warning' | 'error'
+  message: string
+  progress?: number
+  notices?: string[]
+}
+
 const SLOT_POSITIONS = [1, 2, 3, 4, 5] as const
+const MAX_ECHO_SCREENSHOT_BYTES = 20 * 1024 * 1024
 
 function makeBlankSubstats(): DraftSubstat[] {
   return Array.from({ length: 5 }, () => ({ id: '', value: '' }))
@@ -197,6 +206,9 @@ export default function EchoScorePage({ data, setData }: Props) {
   const [activeSlotIndex, setActiveSlotIndex] = useState(0)
   const [echoQuery, setEchoQuery] = useState('')
   const [showEchoResults, setShowEchoResults] = useState(false)
+  const [ocrBusy, setOcrBusy] = useState(false)
+  const [ocrFeedback, setOcrFeedback] = useState<OcrFeedback>()
+  const ocrInputRef = useRef<HTMLInputElement>(null)
 
   const activeSlot = draft.slots[activeSlotIndex]
   const selectedEcho = ECHO_BY_ID.get(activeSlot.echoId)
@@ -274,6 +286,7 @@ export default function EchoScorePage({ data, setData }: Props) {
     setActiveSlotIndex(index)
     setEchoQuery(ECHO_BY_ID.get(nextSlot.echoId)?.name ?? '')
     setShowEchoResults(false)
+    setOcrFeedback(undefined)
   }
 
   const beginCreate = () => {
@@ -281,6 +294,7 @@ export default function EchoScorePage({ data, setData }: Props) {
     setActiveSlotIndex(0)
     setEchoQuery('')
     setShowEchoResults(false)
+    setOcrFeedback(undefined)
     setEditing(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -291,6 +305,7 @@ export default function EchoScorePage({ data, setData }: Props) {
     setActiveSlotIndex(0)
     setEchoQuery(ECHO_BY_ID.get(nextDraft.slots[0].echoId)?.name ?? '')
     setShowEchoResults(false)
+    setOcrFeedback(undefined)
     setEditing(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -301,6 +316,7 @@ export default function EchoScorePage({ data, setData }: Props) {
     setActiveSlotIndex(0)
     setEchoQuery('')
     setShowEchoResults(false)
+    setOcrFeedback(undefined)
   }
 
   const selectEcho = (echoId: string) => {
@@ -344,6 +360,90 @@ export default function EchoScorePage({ data, setData }: Props) {
     setActiveSlot(blank)
     setEchoQuery('')
     setShowEchoResults(false)
+    setOcrFeedback(undefined)
+  }
+
+  const importScreenshot = async (file?: File) => {
+    if (ocrInputRef.current) ocrInputRef.current.value = ''
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setOcrFeedback({
+        kind: 'error',
+        message: 'JPEG・PNG・WebPの画像を選択してください。',
+      })
+      return
+    }
+    if (file.size > MAX_ECHO_SCREENSHOT_BYTES) {
+      setOcrFeedback({
+        kind: 'error',
+        message: '画像は20MB以下にしてください。',
+      })
+      return
+    }
+    if (
+      hasSlotData(activeSlot) &&
+      !confirm(`音骸${activeSlot.position}の入力を読み取り結果で置き換えますか？`)
+    ) {
+      return
+    }
+
+    setOcrBusy(true)
+    setShowEchoResults(false)
+    setOcrFeedback({
+      kind: 'progress',
+      message: '画像を準備中',
+      progress: 0,
+    })
+    try {
+      const result = await recognizeEchoScreenshot(file, ({ message, progress }) => {
+        setOcrFeedback({
+          kind: 'progress',
+          message,
+          progress,
+        })
+      })
+      const recognizedEcho = ECHO_BY_ID.get(result.echoId)
+      const cost = result.cost || recognizedEcho?.cost || ''
+      const substats: DraftSubstat[] = [
+        ...result.substats.map((stat) => ({ id: stat.id, value: stat.value })),
+        ...makeBlankSubstats(),
+      ].slice(0, 5)
+      setActiveSlot({
+        ...activeSlot,
+        cost,
+        echoId: recognizedEcho?.id ?? '',
+        sonataId:
+          recognizedEcho && recognizedEcho.sonataIds.includes(result.sonataId)
+            ? result.sonataId
+            : recognizedEcho?.sonataIds[0] ?? '',
+        mainStatId: result.mainStatId,
+        substats,
+      })
+      setEchoQuery(recognizedEcho?.name ?? '')
+      const recognizedFields = [
+        recognizedEcho ? '音骸名' : '',
+        cost ? 'コスト' : '',
+        result.mainStatId ? 'メイン' : '',
+        result.substats.length > 0 ? `サブ${result.substats.length}件` : '',
+      ].filter(Boolean)
+      setOcrFeedback({
+        kind: result.notices.length > 0 ? 'warning' : 'success',
+        message:
+          recognizedFields.length > 0
+            ? `${recognizedFields.join('・')}を入力しました。内容を確認してください。`
+            : '読み取り結果を入力できませんでした。',
+        notices: result.notices,
+      })
+    } catch (error) {
+      console.error(error)
+      setOcrFeedback({
+        kind: 'error',
+        message:
+          '画像を読み取れませんでした。ゲーム内の音骸詳細画面をそのまま選択してください。',
+      })
+    } finally {
+      setOcrBusy(false)
+    }
   }
 
   const save = () => {
@@ -585,6 +685,7 @@ export default function EchoScorePage({ data, setData }: Props) {
                   isCompleteSlot(slot) ? 'complete' : ''
                 }`}
                 aria-selected={index === activeSlotIndex}
+                disabled={ocrBusy}
                 onClick={() => switchSlot(index)}
               >
                 <span>{slot.position}</span>
@@ -647,6 +748,61 @@ export default function EchoScorePage({ data, setData }: Props) {
               入力を消去
             </button>
           )}
+        </div>
+
+        <div className="echo-ocr-import">
+          <input
+            ref={ocrInputRef}
+            className="echo-ocr-file"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(event) => void importScreenshot(event.target.files?.[0])}
+          />
+          <button
+            className="echo-ocr-button"
+            disabled={ocrBusy}
+            onClick={() => ocrInputRef.current?.click()}
+          >
+            <svg
+              className="echo-ocr-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14.5V20h14v-5.5" />
+            </svg>
+            <span>
+              <strong>
+                {ocrBusy ? 'スクリーンショットを解析中' : 'スクリーンショットから入力'}
+              </strong>
+              <small>音骸名・ハーモニー・ステータスを端末内で読み取ります</small>
+            </span>
+          </button>
+          {ocrFeedback && (
+            <div
+              className="echo-ocr-feedback"
+              data-kind={ocrFeedback.kind}
+              role="status"
+              aria-live="polite"
+            >
+              {ocrFeedback.kind === 'progress' && (
+                <span
+                  className="echo-ocr-progress"
+                  style={{ '--ocr-progress': ocrFeedback.progress ?? 0 } as CSSProperties}
+                />
+              )}
+              <p>{ocrFeedback.message}</p>
+              {ocrFeedback.notices && ocrFeedback.notices.length > 0 && (
+                <ul>
+                  {ocrFeedback.notices.map((notice) => (
+                    <li key={notice}>{notice}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          <small className="echo-ocr-privacy">
+            画像はこの端末内で処理され、保存・送信されません
+          </small>
         </div>
 
         <div className="echo-field">
