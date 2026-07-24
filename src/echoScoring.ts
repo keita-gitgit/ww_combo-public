@@ -14,7 +14,7 @@ import type {
   EchoStatId,
 } from './types'
 
-export const ECHO_SCORE_FORMULA_VERSION = 'character-v5' as const
+export const ECHO_SCORE_FORMULA_VERSION = 'character-v6' as const
 
 export const ECHO_SCORE_PROFILES: ReadonlyArray<{
   id: EchoScoreProfile

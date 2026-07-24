@@ -152,6 +152,7 @@ const ACTION_DAMAGE_STAT_IDS = new Set<EchoStatId>([
   'resonanceLiberationDamage',
 ])
 const FLAT_STAT_IDS = new Set<EchoStatId>(['attack', 'hp', 'defense'])
+const EXCLUDED_SCORE_STAT_IDS = new Set<EchoStatId>(['energyRegen'])
 
 function applyScoringPolicy(
   characterName: keyof typeof BASE_CHARACTER_ECHO_SCORE_WEIGHTS,
@@ -161,7 +162,12 @@ function applyScoringPolicy(
   for (const [statId, weight] of Object.entries(source.substats) as Array<
     [EchoStatId, number]
   >) {
-    if (ACTION_DAMAGE_STAT_IDS.has(statId)) continue
+    if (
+      ACTION_DAMAGE_STAT_IDS.has(statId) ||
+      EXCLUDED_SCORE_STAT_IDS.has(statId)
+    ) {
+      continue
+    }
     substats[statId] = FLAT_STAT_IDS.has(statId)
       ? ECHO_SCORE_FLAT_STAT_WEIGHT
       : weight
@@ -172,9 +178,20 @@ function applyScoringPolicy(
     substats[actionDamageStat] = ECHO_SCORE_ACTION_DAMAGE_WEIGHT
   }
 
+  const mainStats = Object.fromEntries(
+    ([1, 3, 4] as const).map((cost) => [
+      cost,
+      Object.fromEntries(
+        Object.entries(source.mainStats[cost]).filter(
+          ([statId]) => !EXCLUDED_SCORE_STAT_IDS.has(statId as EchoStatId),
+        ),
+      ),
+    ]),
+  ) as CharacterEchoScoreWeights['mainStats']
+
   return {
     substats,
-    mainStats: source.mainStats,
+    mainStats,
   }
 }
 
@@ -209,13 +226,11 @@ export const ECHO_SCORE_ACTION_DAMAGE_TIE_BREAK_SOURCES = [
   'https://gamewith.jp/wutheringwaves/503941',
 ] as const
 
-export const ECHO_SCORE_WEIGHT_OVERRIDES = [
+export const ECHO_SCORE_GLOBAL_EXCLUSIONS = [
   {
-    characterName: '秧秧・玄翎',
     statId: 'energyRegen',
     weight: 0,
-    reason: '個別攻略ページの推奨音骸・サブステータスに共鳴効率が含まれないため',
-    sourceUrl: 'https://gamewith.jp/wutheringwaves/563870',
+    reason: '共鳴効率は全キャラの音骸スコアに含めないため',
     checkedAt: '2026-07-24',
   },
 ] as const

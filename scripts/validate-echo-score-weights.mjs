@@ -60,6 +60,15 @@ for (const name of mappingNames) {
 }
 
 for (const [characterName, weights] of Object.entries(weightsByCharacter)) {
+  if ('energyRegen' in weights.substats) {
+    errors.push(`${characterName}: 共鳴効率がサブステータス係数に含まれています`)
+  }
+  for (const [cost, mainStats] of Object.entries(weights.mainStats)) {
+    if ('energyRegen' in mainStats) {
+      errors.push(`${characterName}: COST${cost}のメインステータス係数に共鳴効率が含まれています`)
+    }
+  }
+
   const selectedActionDamage = actionDamageByCharacter[characterName]
   const scoredActionDamage = Object.entries(weights.substats).filter(([statId]) =>
     actionDamageStatIds.has(statId),
@@ -100,6 +109,7 @@ if (actionDamageWeight !== 0.7) {
 const formulaCheck = calculateCharacterEchoScore(
   [
     { id: 'attack', value: 60 },
+    { id: 'energyRegen', value: 12.4 },
     { id: 'resonanceSkillDamage', value: 10.1 },
     { id: 'resonanceLiberationDamage', value: 10.1 },
   ],
@@ -113,6 +123,9 @@ const formulaContributions = Object.fromEntries(
 )
 if (formulaContributions.attack !== 6) {
   errors.push('攻撃力実数60が6点として計算されていません')
+}
+if (formulaContributions.energyRegen !== 0) {
+  errors.push('共鳴効率が0点になっていません')
 }
 if (formulaContributions.resonanceSkillDamage !== 7.07) {
   errors.push('採用ダメージアップ10.1%が7.07点として計算されていません')
@@ -129,5 +142,5 @@ if (errors.length > 0) {
 const selectedCount = Object.values(actionDamageByCharacter).filter(Boolean).length
 console.log(
   `音骸スコア係数: ${weightNames.size}キャラ / ダメージアップ ${selectedCount}キャラ` +
-    `（対象なし ${weightNames.size - selectedCount}キャラ） / 実数値 ÷10`,
+    `（対象なし ${weightNames.size - selectedCount}キャラ） / 実数値 ÷10 / 共鳴効率 0点`,
 )

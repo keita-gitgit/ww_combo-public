@@ -29,6 +29,7 @@ export type EchoScoreFormulaVersion =
   | 'character-v3'
   | 'character-v4'
   | 'character-v5'
+  | 'character-v6'
 
 export type EchoStatId =
   | 'hp'
