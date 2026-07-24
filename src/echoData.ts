@@ -1,6 +1,7 @@
 import echoMasterJson from './data/echoes.json'
+import sonataIconMasterJson from './data/sonataIcons.json'
 import sonataMasterJson from './data/sonataEffects.json'
-import type { EchoMasterEntry, SonataEffect } from './types'
+import type { EchoMasterEntry, SonataEffect, SonataIconEntry } from './types'
 
 interface MasterMetadata<T> {
   schemaVersion: 1
@@ -13,6 +14,7 @@ interface MasterMetadata<T> {
 
 const echoMaster = echoMasterJson as MasterMetadata<EchoMasterEntry>
 const sonataMaster = sonataMasterJson as MasterMetadata<SonataEffect>
+const sonataIconMaster = sonataIconMasterJson as MasterMetadata<SonataIconEntry>
 
 export const ECHO_MASTER_METADATA = {
   schemaVersion: echoMaster.schemaVersion,
@@ -23,9 +25,13 @@ export const ECHO_MASTER_METADATA = {
 
 export const ECHOES: readonly EchoMasterEntry[] = echoMaster.entries
 export const SONATA_EFFECTS: readonly SonataEffect[] = sonataMaster.entries
+export const SONATA_ICONS: readonly SonataIconEntry[] = sonataIconMaster.entries
 
 export const ECHO_BY_ID = new Map(ECHOES.map((echo) => [echo.id, echo]))
 export const SONATA_BY_ID = new Map(SONATA_EFFECTS.map((sonata) => [sonata.id, sonata]))
+export const SONATA_ICON_BY_ID = new Map(
+  SONATA_ICONS.map((icon) => [icon.sonataId, icon]),
+)
 
 /**
  * OCR結果の比較用。空白・中黒・括弧・一部の見た目が近い記号を除去し、
@@ -56,4 +62,3 @@ const ECHO_OCR_NAME_INDEX = new Map(
 export function findEchoByOcrName(value: string): EchoMasterEntry | undefined {
   return ECHO_OCR_NAME_INDEX.get(normalizeEchoOcrText(value))
 }
-

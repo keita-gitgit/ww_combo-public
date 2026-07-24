@@ -75,6 +75,14 @@ export interface SonataEffect {
   effects: SonataSetEffect[]
 }
 
+export interface SonataIconEntry {
+  sonataId: string
+  /** public/ を基準にした同梱アイコンのパス */
+  iconPath: string
+  /** 素材配布元のファイル名。再取得と照合に使用する */
+  sourceFileName: string
+}
+
 export interface EchoStatDefinition {
   id: EchoStatId
   name: string
