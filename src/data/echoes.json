@@ -1,0 +1,1974 @@
+{
+  "schemaVersion": 1,
+  "gameVersion": "3.5",
+  "updatedAt": "2026-07-24",
+  "expectedEntryCount": 180,
+  "scopeNote": "装備・スコア上で別個体として扱われる音骸を収録。性能が同一でスキン扱いの異相音骸は重複登録しない。",
+  "sourceUrls": [
+    "https://gamewith.jp/wutheringwaves/449547",
+    "https://wikiwiki.jp/w-w/%E9%9F%B3%E9%AA%B8%E4%B8%80%E8%A6%A7"
+  ],
+  "entries": [
+    {
+      "id": "echo-001",
+      "sourceId": 1,
+      "name": "フシュシュ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-04",
+        "sonata-07",
+        "sonata-08"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-002",
+      "sourceId": 2,
+      "name": "カチャチャ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-09",
+        "sonata-07",
+        "sonata-02"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-003",
+      "sourceId": 3,
+      "name": "アツツ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-08",
+        "sonata-09",
+        "sonata-05"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-004",
+      "sourceId": 4,
+      "name": "ウカカ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-09",
+        "sonata-07",
+        "sonata-06"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-005",
+      "sourceId": 5,
+      "name": "グルッポ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-05",
+        "sonata-01"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-006",
+      "sourceId": 6,
+      "name": "ジュルッポ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-06",
+        "sonata-04"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-007",
+      "sourceId": 7,
+      "name": "モグロン",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-01",
+        "sonata-06"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-008",
+      "sourceId": 8,
+      "name": "熔解トカゲ（幼体）",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-09",
+        "sonata-03",
+        "sonata-02"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-009",
+      "sourceId": 9,
+      "name": "砕牙イノシシ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-08",
+        "sonata-04",
+        "sonata-01"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-010",
+      "sourceId": 10,
+      "name": "火鬛狼",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-07",
+        "sonata-02"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-011",
+      "sourceId": 11,
+      "name": "結晶化サソリ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-08",
+        "sonata-09"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-012",
+      "sourceId": 12,
+      "name": "遊弋蝶",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-07",
+        "sonata-08",
+        "sonata-05"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-013",
+      "sourceId": 13,
+      "name": "寒霜亀",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-05",
+        "sonata-01"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-014",
+      "sourceId": 14,
+      "name": "猿の幼体",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-09",
+        "sonata-04"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-015",
+      "sourceId": 15,
+      "name": "青羽サギ",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-04",
+        "sonata-05"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-016",
+      "sourceId": 16,
+      "name": "紫羽サギ",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-02",
+        "sonata-03"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-017",
+      "sourceId": 17,
+      "name": "熔解トカゲ",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-08",
+        "sonata-02"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-018",
+      "sourceId": 18,
+      "name": "黒棘熊",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-09",
+        "sonata-08"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-019",
+      "sourceId": 19,
+      "name": "闇鬛狼",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-02",
+        "sonata-06"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-020",
+      "sourceId": 20,
+      "name": "いたずら猿",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-07",
+        "sonata-04"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-021",
+      "sourceId": 21,
+      "name": "飛廉の大猿",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-04"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-022",
+      "sourceId": 22,
+      "name": "無情のサギ",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-08"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-023",
+      "sourceId": 23,
+      "name": "哀切の凶鳥",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-05"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-024",
+      "sourceId": 24,
+      "name": "無冠者",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-06"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-025",
+      "sourceId": 25,
+      "name": "鳴鐘の亀",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-08",
+        "sonata-07"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-026",
+      "sourceId": 26,
+      "name": "凝縮のプリズム",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-06",
+        "sonata-08",
+        "sonata-01"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-027",
+      "sourceId": 27,
+      "name": "焦熱のプリズム",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-01",
+        "sonata-09",
+        "sonata-02"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-028",
+      "sourceId": 28,
+      "name": "消滅のプリズム",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-03",
+        "sonata-05",
+        "sonata-06"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-029",
+      "sourceId": 29,
+      "name": "回折のプリズム",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-02",
+        "sonata-03",
+        "sonata-05"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-030",
+      "sourceId": 30,
+      "name": "輝き蛍の軍勢",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-01"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-031",
+      "sourceId": 31,
+      "name": "恐刃の車",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-08",
+        "sonata-04"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-032",
+      "sourceId": 32,
+      "name": "機械アボミネーション",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-09"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-033",
+      "sourceId": 33,
+      "name": "トゲバラタケ（幼体）",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-04",
+        "sonata-06"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-034",
+      "sourceId": 34,
+      "name": "トゲバラタケ",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-01",
+        "sonata-06"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-035",
+      "sourceId": 35,
+      "name": "先兵岩塊",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-07",
+        "sonata-03",
+        "sonata-09"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-036",
+      "sourceId": 36,
+      "name": "壊れかけ岩塊",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-08",
+        "sonata-03",
+        "sonata-07"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-037",
+      "sourceId": 37,
+      "name": "巨岩の闘士",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-07",
+        "sonata-08"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-038",
+      "sourceId": 38,
+      "name": "春雷の狩人",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-02",
+        "sonata-03"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-039",
+      "sourceId": 39,
+      "name": "破霜の狩人",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-05",
+        "sonata-01"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-040",
+      "sourceId": 40,
+      "name": "徘徊の狩人",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-03",
+        "sonata-04"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-041",
+      "sourceId": 41,
+      "name": "慟哭の戦士",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-04",
+        "sonata-03",
+        "sonata-02"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-042",
+      "sourceId": 42,
+      "name": "審判の戦士",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-05",
+        "sonata-06"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-043",
+      "sourceId": 43,
+      "name": "金鈴の楽手",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-01",
+        "sonata-06"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-044",
+      "sourceId": 44,
+      "name": "宣諭の楽手",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-09",
+        "sonata-03"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-045",
+      "sourceId": 45,
+      "name": "冥淵の守り手",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-09",
+        "sonata-07"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-046",
+      "sourceId": 46,
+      "name": "盤石の守り手",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-07",
+        "sonata-05"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-047",
+      "sourceId": 47,
+      "name": "雷刹のウロコ",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-03"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-048",
+      "sourceId": 48,
+      "name": "雲閃のウロコ",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-03"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-049",
+      "sourceId": 49,
+      "name": "燎原の炎騎",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-02"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-050",
+      "sourceId": 50,
+      "name": "巡回のカラクリ",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-05",
+        "sonata-01"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-051",
+      "sourceId": 51,
+      "name": "信号機モドキ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-03",
+        "sonata-04",
+        "sonata-02"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-058",
+      "sourceId": 58,
+      "name": "無妄者",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-06"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-059",
+      "sourceId": 59,
+      "name": "角",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-05"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-060",
+      "sourceId": 60,
+      "name": "溶岩虫",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-09",
+        "sonata-02"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-061",
+      "sourceId": 61,
+      "name": "地駝鳥",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-04",
+        "sonata-07"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-062",
+      "sourceId": 62,
+      "name": "チリン",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-01",
+        "sonata-05"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-063",
+      "sourceId": 63,
+      "name": "浮遊鱗機",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-03",
+        "sonata-01"
+      ],
+      "variant": "standard",
+      "aliases": [
+        "浮遊鱗機(ふゆうりんき)"
+      ]
+    },
+    {
+      "id": "echo-064",
+      "sourceId": 64,
+      "name": "雪鼠狼",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-08",
+        "sonata-01"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-065",
+      "sourceId": 65,
+      "name": "光踏獣",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-05"
+      ],
+      "variant": "standard",
+      "aliases": [
+        "光踏獣(こうとうじゅう)"
+      ]
+    },
+    {
+      "id": "echo-066",
+      "sourceId": 66,
+      "name": "フェイタルエラー",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-07"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-067",
+      "sourceId": 67,
+      "name": "風鬣狼",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-10",
+        "sonata-13"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-068",
+      "sourceId": 68,
+      "name": "フロートアルマ・レフト",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-10",
+        "sonata-14"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-069",
+      "sourceId": 69,
+      "name": "フロートアルマ・ライト",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-14",
+        "sonata-10"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-070",
+      "sourceId": 70,
+      "name": "ミスター・マギア",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-10",
+        "sonata-13"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-071",
+      "sourceId": 71,
+      "name": "ミス・ロンリー",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-14",
+        "sonata-10"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-072",
+      "sourceId": 72,
+      "name": "秘蔵ミミック",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-12",
+        "sonata-13",
+        "sonata-10"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-073",
+      "sourceId": 73,
+      "name": "回歴の騎士",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-10",
+        "sonata-12"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-074",
+      "sourceId": 74,
+      "name": "アビサル・パトリシウス",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-13",
+        "sonata-10"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-075",
+      "sourceId": 75,
+      "name": "アビサル・メルカトル",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-10",
+        "sonata-11"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-076",
+      "sourceId": 76,
+      "name": "ビッグベア",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-12",
+        "sonata-10"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-077",
+      "sourceId": 77,
+      "name": "ゼノコロッサス",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-10"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-078",
+      "sourceId": 78,
+      "name": "霜鬣狼",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-12",
+        "sonata-11"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-079",
+      "sourceId": 79,
+      "name": "フロートアルマ・ヘッド",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-11",
+        "sonata-14"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-080",
+      "sourceId": 80,
+      "name": "フェイイグニス",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-12",
+        "sonata-11",
+        "sonata-18"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-081",
+      "sourceId": 81,
+      "name": "サクサクベア",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-11",
+        "sonata-14"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-082",
+      "sourceId": 82,
+      "name": "炎昼の騎士",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-11",
+        "sonata-14"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-083",
+      "sourceId": 83,
+      "name": "ヴィトルムダンサー",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-13",
+        "sonata-11"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-084",
+      "sourceId": 84,
+      "name": "雷鬣狼",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-13",
+        "sonata-12"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-085",
+      "sourceId": 85,
+      "name": "雲の妖精",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-13",
+        "sonata-12",
+        "sonata-21"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-086",
+      "sourceId": 86,
+      "name": "闇夜の騎士",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-12",
+        "sonata-13"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-087",
+      "sourceId": 87,
+      "name": "アビサル・グラディウス",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-14",
+        "sonata-12",
+        "sonata-22"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-088",
+      "sourceId": 88,
+      "name": "ローレライ",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-12"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-089",
+      "sourceId": 89,
+      "name": "フロートアルマ",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-14",
+        "sonata-13",
+        "sonata-18"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-090",
+      "sourceId": 90,
+      "name": "ヘカテー",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-13"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-091",
+      "sourceId": 91,
+      "name": "嘆きのドレイク",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-14"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-092",
+      "sourceId": 92,
+      "name": "ナイトメア・燎原の炎騎",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-02"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-093",
+      "sourceId": 93,
+      "name": "ナイトメア・雲閃のウロコ",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-03"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-094",
+      "sourceId": 94,
+      "name": "ナイトメア・無情のサギ",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-12"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-095",
+      "sourceId": 95,
+      "name": "ナイトメア・哀切の凶鳥",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-11"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-096",
+      "sourceId": 96,
+      "name": "ナイトメア・飛廉の大猿",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-04"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-097",
+      "sourceId": 97,
+      "name": "ナイトメア・雷刹のウロコ",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-03",
+        "sonata-13"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-098",
+      "sourceId": 98,
+      "name": "ナイトメア・無冠者",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-06"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-099",
+      "sourceId": 99,
+      "name": "ハリケーン熊",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-14",
+        "sonata-19"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-100",
+      "sourceId": 100,
+      "name": "気動のプリズム",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-11",
+        "sonata-14"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-101",
+      "sourceId": 101,
+      "name": "愚者のゴールドの岩塊",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-10",
+        "sonata-11",
+        "sonata-20"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-102",
+      "sourceId": 102,
+      "name": "ミカーレの岩塊",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-13",
+        "sonata-14",
+        "sonata-19"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-103",
+      "sourceId": 103,
+      "name": "彫像を再構築する岩拳",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-11",
+        "sonata-20"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-104",
+      "sourceId": 104,
+      "name": "ドレイクの幼体・気動",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-15",
+        "sonata-14"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-105",
+      "sourceId": 105,
+      "name": "ドレイクの幼体・電導",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-15",
+        "sonata-12"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-106",
+      "sourceId": 106,
+      "name": "ドレイクの幼体・凝縮",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-15"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-107",
+      "sourceId": 107,
+      "name": "ガルディア",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-15",
+        "sonata-12"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-108",
+      "sourceId": 108,
+      "name": "サジタリオ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-15",
+        "sonata-11"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-109",
+      "sourceId": 109,
+      "name": "サケルドス",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-15"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-110",
+      "sourceId": 110,
+      "name": "カピタネウス",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-15",
+        "sonata-11"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-111",
+      "sourceId": 111,
+      "name": "ナイトメア・輝き蛍の軍勢",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-10",
+        "sonata-13"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-112",
+      "sourceId": 112,
+      "name": "響き渡る共鳴・フルールドリス",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-15"
+      ],
+      "variant": "resonant"
+    },
+    {
+      "id": "echo-113",
+      "sourceId": 113,
+      "name": "ドレイクの幼体・焦熱",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-17",
+        "sonata-16"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-114",
+      "sourceId": 114,
+      "name": "ドレイクの幼体・回折",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-17",
+        "sonata-16"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-115",
+      "sourceId": 115,
+      "name": "ドレイクの幼体・消滅",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-17",
+        "sonata-16",
+        "sonata-22"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-116",
+      "sourceId": 116,
+      "name": "クラトスクス",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-16",
+        "sonata-17",
+        "sonata-21"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-117",
+      "sourceId": 117,
+      "name": "狂信者の血肉",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-15",
+        "sonata-16",
+        "sonata-17"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-118",
+      "sourceId": 118,
+      "name": "伝道師の空殻",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-16",
+        "sonata-17"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-119",
+      "sourceId": 119,
+      "name": "誉れのライオネス",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-17"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-120",
+      "sourceId": 120,
+      "name": "ナイトメア・ケルピー",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-15",
+        "sonata-16"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-121",
+      "sourceId": 121,
+      "name": "ナイトメア・破霜の狩人",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-18"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-122",
+      "sourceId": 122,
+      "name": "ナイトメア・審判の戦士",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-18"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-123",
+      "sourceId": 123,
+      "name": "ナイトメア・金鈴の楽手",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-18"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-124",
+      "sourceId": 124,
+      "name": "響き渡る共鳴・フェンリコ",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-18",
+        "sonata-20"
+      ],
+      "variant": "resonant"
+    },
+    {
+      "id": "echo-125",
+      "sourceId": 125,
+      "name": "ナイトメア・ヘカテー",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-18"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-126",
+      "sourceId": 126,
+      "name": "ナイトメア・グルッポ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-20"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-127",
+      "sourceId": 127,
+      "name": "ナイトメア・ジュルッポ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-20"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-128",
+      "sourceId": 128,
+      "name": "ナイトメア・春雷の狩人",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-19"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-129",
+      "sourceId": 129,
+      "name": "ナイトメア・徘徊の狩人",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-19"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-130",
+      "sourceId": 130,
+      "name": "ナイトメア・青羽サギ",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-20"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-131",
+      "sourceId": 131,
+      "name": "ナイトメア・紫羽サギ",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-19"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-132",
+      "sourceId": 132,
+      "name": "コロサウルス",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-17",
+        "sonata-21"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-133",
+      "sourceId": 133,
+      "name": "偽りの神王",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-19"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-134",
+      "sourceId": 134,
+      "name": "海の娘",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-19"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-135",
+      "sourceId": 135,
+      "name": "ナイトメア・熔解トカゲ（幼体）",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-21"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-136",
+      "sourceId": 136,
+      "name": "ナイトメア・熔解トカゲ",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-21"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-137",
+      "sourceId": 137,
+      "name": "ナイトメア・トゲバラタケ（幼体）",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-21"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-138",
+      "sourceId": 138,
+      "name": "響き渡る共鳴・鳴式・レビヤタン",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-21",
+        "sonata-22"
+      ],
+      "variant": "resonant"
+    },
+    {
+      "id": "echo-139",
+      "sourceId": 139,
+      "name": "ナイトメア・ウカカ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-22"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-140",
+      "sourceId": 140,
+      "name": "ナイトメア・地駝鳥",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-22"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-141",
+      "sourceId": 141,
+      "name": "ナイトメア・トゲバラタケ",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-22"
+      ],
+      "variant": "nightmare"
+    },
+    {
+      "id": "echo-142",
+      "sourceId": 142,
+      "name": "ハイヴェイシャ",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-23",
+        "sonata-25"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-143",
+      "sourceId": 143,
+      "name": "ドライブの機骸",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-24",
+        "sonata-27"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-144",
+      "sourceId": 144,
+      "name": "バイポーラ・ノヴァライザー",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-25",
+        "sonata-27"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-145",
+      "sourceId": 145,
+      "name": "バイポーラ・アビスフォール",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-25",
+        "sonata-26",
+        "sonata-28"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-146",
+      "sourceId": 146,
+      "name": "フローラ・メカレインディア",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-25",
+        "sonata-29"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-147",
+      "sourceId": 147,
+      "name": "マイニング・メカレインディア",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-23",
+        "sonata-29"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-148",
+      "sourceId": 148,
+      "name": "アイアン・フーフ",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-23",
+        "sonata-30",
+        "sonata-29"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-149",
+      "sourceId": 149,
+      "name": "スペーストレック重機",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-24",
+        "sonata-27",
+        "sonata-28"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-150",
+      "sourceId": 150,
+      "name": "リッパーシェード",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-23",
+        "sonata-24",
+        "sonata-28"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-151",
+      "sourceId": 151,
+      "name": "プラウラーシェード",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-23",
+        "sonata-24",
+        "sonata-28"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-152",
+      "sourceId": 152,
+      "name": "霜纏いの寄生甲",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-24",
+        "sonata-30"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-153",
+      "sourceId": 153,
+      "name": "風纏いの寄生甲",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-25",
+        "sonata-30"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-154",
+      "sourceId": 154,
+      "name": "カフンクマバチ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-23",
+        "sonata-25",
+        "sonata-28"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-155",
+      "sourceId": 155,
+      "name": "サイクツクマバチ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-24",
+        "sonata-25",
+        "sonata-28"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-156",
+      "sourceId": 156,
+      "name": "イワグモS4型",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-23",
+        "sonata-24",
+        "sonata-26"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-157",
+      "sourceId": 157,
+      "name": "戦慄の戦士",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-24",
+        "sonata-27",
+        "sonata-30"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-158",
+      "sourceId": 158,
+      "name": "ビリリ",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-23",
+        "sonata-25",
+        "sonata-27"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-159",
+      "sourceId": 159,
+      "name": "アイスグリントダンサー",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-26",
+        "sonata-30",
+        "sonata-29"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-160",
+      "sourceId": 160,
+      "name": "シャドウステッパー",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-26",
+        "sonata-27",
+        "sonata-30"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-161",
+      "sourceId": 161,
+      "name": "メカファルコン",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-26",
+        "sonata-27"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-162",
+      "sourceId": 162,
+      "name": "グローモス",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-26",
+        "sonata-30"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-163",
+      "sourceId": 163,
+      "name": "響き渡る共鳴・クロナファルコン",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-26",
+        "sonata-27"
+      ],
+      "variant": "resonant"
+    },
+    {
+      "id": "echo-164",
+      "sourceId": 164,
+      "name": "名もない探索者",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-28",
+        "sonata-29"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-165",
+      "sourceId": 165,
+      "name": "シギルム",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-26"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-166",
+      "sourceId": 166,
+      "name": "ファントムモス",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-29"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-167",
+      "sourceId": 167,
+      "name": "響き渡る共鳴・ダーニャ",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-27"
+      ],
+      "variant": "resonant"
+    },
+    {
+      "id": "echo-168",
+      "sourceId": 168,
+      "name": "響き渡る共鳴・鳴式・虚構神機",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-30"
+      ],
+      "variant": "resonant"
+    },
+    {
+      "id": "echo-169",
+      "sourceId": 169,
+      "name": "響き渡る共鳴・ナイトメア・スマッシャー",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-31"
+      ],
+      "variant": "resonant-nightmare"
+    },
+    {
+      "id": "echo-170",
+      "sourceId": 170,
+      "name": "磁器の庭候",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-34"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-171",
+      "sourceId": 171,
+      "name": "石の庭候",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-34"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-172",
+      "sourceId": 172,
+      "name": "金鉄の庭候",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-33"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-173",
+      "sourceId": 173,
+      "name": "心傀・喜",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-32"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-174",
+      "sourceId": 174,
+      "name": "心傀・怒",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-33"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-175",
+      "sourceId": 175,
+      "name": "心傀・憂",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-33"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-176",
+      "sourceId": 176,
+      "name": "心傀・思",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-33"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-177",
+      "sourceId": 177,
+      "name": "心傀・悲",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-34"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-178",
+      "sourceId": 178,
+      "name": "心傀・恐",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-34"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-179",
+      "sourceId": 179,
+      "name": "霽息の獣尊・胴",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-32"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-180",
+      "sourceId": 180,
+      "name": "霽息の獣尊・首",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-32"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-181",
+      "sourceId": 181,
+      "name": "融躯の戦士",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-32"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-182",
+      "sourceId": 182,
+      "name": "熄えぬ狩人",
+      "cost": 1,
+      "sonataIds": [
+        "sonata-32"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-183",
+      "sourceId": 183,
+      "name": "霽息の獣尊",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-34",
+        "sonata-33",
+        "sonata-32"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-184",
+      "sourceId": 184,
+      "name": "封庭の械囿",
+      "cost": 3,
+      "sonataIds": [
+        "sonata-34",
+        "sonata-33",
+        "sonata-32"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-185",
+      "sourceId": 185,
+      "name": "万囮の檻・朽躯",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-34",
+        "sonata-33"
+      ],
+      "variant": "standard"
+    },
+    {
+      "id": "echo-186",
+      "sourceId": 186,
+      "name": "千傀の重楼",
+      "cost": 4,
+      "sonataIds": [
+        "sonata-32"
+      ],
+      "variant": "standard"
+    }
+  ]
+}

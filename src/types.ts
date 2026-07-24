@@ -13,6 +13,80 @@ export type AppTheme = 'dark' | 'light' | 'cream'
 
 export type ComboCardTone = '焦熱' | '凝縮' | '電導' | '気動' | '回折' | '消滅'
 
+export type EchoCost = 1 | 3 | 4
+
+export type EchoVariant = 'standard' | 'nightmare' | 'resonant' | 'resonant-nightmare'
+
+export type EchoStatUnit = 'flat' | 'percent'
+
+export type EchoStatId =
+  | 'hp'
+  | 'hpPercent'
+  | 'attack'
+  | 'attackPercent'
+  | 'defense'
+  | 'defensePercent'
+  | 'critRate'
+  | 'critDamage'
+  | 'healingBonus'
+  | 'energyRegen'
+  | 'glacioDamage'
+  | 'fusionDamage'
+  | 'electroDamage'
+  | 'aeroDamage'
+  | 'spectroDamage'
+  | 'havocDamage'
+  | 'basicAttackDamage'
+  | 'heavyAttackDamage'
+  | 'resonanceSkillDamage'
+  | 'resonanceLiberationDamage'
+
+export interface EchoMasterEntry {
+  id: string
+  /** 調査元一覧で使用されている番号。照合用で、保存データの参照には id を使う */
+  sourceId: number
+  name: string
+  cost: EchoCost
+  sonataIds: string[]
+  variant: EchoVariant
+  /** 読み仮名付き表記など、OCR時に同一音骸として扱う名前 */
+  aliases?: string[]
+}
+
+export interface SonataSetEffect {
+  pieces: 1 | 2 | 3 | 5
+  description: string
+}
+
+export interface SonataEffect {
+  id: string
+  name: string
+  introducedIn: string
+  effects: SonataSetEffect[]
+}
+
+export interface EchoStatDefinition {
+  id: EchoStatId
+  name: string
+  unit: EchoStatUnit
+  /** OCRで同一ステータスとして扱う画面表記 */
+  aliases: string[]
+  /** サブステータスに出現する値。空配列ならサブステータスには出現しない */
+  substatValues: number[]
+}
+
+export interface EchoMainStatRule {
+  cost: EchoCost
+  fixedStat: {
+    id: EchoStatId
+    valueAtFiveStarLevel25: number
+  }
+  primaryStats: Array<{
+    id: EchoStatId
+    valueAtFiveStarLevel25: number
+  }>
+}
+
 export interface CharacterAction {
   id: string
   name: string

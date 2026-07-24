@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "gameVersion": "3.5",
+  "updatedAt": "2026-07-24",
+  "expectedEntryCount": 34,
+  "sourceUrls": [
+    "https://wikiwiki.jp/w-w/%E9%9F%B3%E9%AA%B8/%E3%83%8F%E3%83%BC%E3%83%A2%E3%83%8B%E3%83%BC%E5%8A%B9%E6%9E%9C%E5%88%A5",
+    "https://gamewith.jp/wutheringwaves/449547"
+  ],
+  "entries": [
+    {
+      "id": "sonata-01",
+      "name": "夜にこびり付く白霜",
+      "introducedIn": "1.0",
+      "effects": [
+        { "pieces": 2, "description": "凝縮ダメージが10%アップ。" },
+        { "pieces": 5, "description": "通常攻撃または重撃後、凝縮ダメージが10%アップ。最大3スタック、15秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-02",
+      "name": "山を轟かせる崩火",
+      "introducedIn": "1.0",
+      "effects": [
+        { "pieces": 2, "description": "焦熱ダメージが10%アップ。" },
+        { "pieces": 5, "description": "共鳴スキル使用後、焦熱ダメージが30%アップ。15秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-03",
+      "name": "空を切り裂く冥雷",
+      "introducedIn": "1.0",
+      "effects": [
+        { "pieces": 2, "description": "電導ダメージが10%アップ。" },
+        { "pieces": 5, "description": "重撃または共鳴スキル使用後、電導ダメージが15%アップ。最大2スタック、15秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-04",
+      "name": "谷を突き抜ける長風",
+      "introducedIn": "1.0",
+      "effects": [
+        { "pieces": 2, "description": "気動ダメージが10%アップ。" },
+        { "pieces": 5, "description": "変奏スキルで登場した時、気動ダメージが30%アップ。15秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-05",
+      "name": "闇を取り払う浮星",
+      "introducedIn": "1.0",
+      "effects": [
+        { "pieces": 2, "description": "回折ダメージが10%アップ。" },
+        { "pieces": 5, "description": "変奏スキルで登場した時、回折ダメージが30%アップ。15秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-06",
+      "name": "二度と輝かない沈日",
+      "introducedIn": "1.0",
+      "effects": [
+        { "pieces": 2, "description": "消滅ダメージが10%アップ。" },
+        { "pieces": 5, "description": "通常攻撃または重撃後、消滅ダメージが7.5%アップ。最大4スタック、15秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-07",
+      "name": "喧騒に隠す回光",
+      "introducedIn": "1.0",
+      "effects": [
+        { "pieces": 2, "description": "HP回復効果が10%アップ。" },
+        { "pieces": 5, "description": "味方を回復した時、チーム全員の攻撃力が15%アップ。30秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-08",
+      "name": "月を窺う軽雲",
+      "introducedIn": "1.0",
+      "effects": [
+        { "pieces": 2, "description": "共鳴効率が10%アップ。" },
+        { "pieces": 5, "description": "終奏スキル発動後、次に登場する共鳴者の攻撃力が22.5%アップ。15秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-09",
+      "name": "絶えない余韻",
+      "introducedIn": "1.0",
+      "effects": [
+        { "pieces": 2, "description": "攻撃力が10%アップ。" },
+        { "pieces": 5, "description": "場にいる間、1.5秒ごとに攻撃力が5%アップ。最大4スタック。終奏スキルダメージが60%アップ。" }
+      ]
+    },
+    {
+      "id": "sonata-10",
+      "name": "フロステッド・ハート",
+      "introducedIn": "2.0",
+      "effects": [
+        { "pieces": 2, "description": "共鳴スキルダメージが12%アップ。" },
+        { "pieces": 5, "description": "共鳴スキル使用後、凝縮ダメージが22.5%アップ（15秒）。共鳴解放使用後、共鳴スキルダメージが18%アップ（5秒、最大2スタック）。" }
+      ]
+    },
+    {
+      "id": "sonata-11",
+      "name": "エターナル・ライト",
+      "introducedIn": "2.0",
+      "effects": [
+        { "pieces": 2, "description": "回折ダメージが10%アップ。" },
+        { "pieces": 5, "description": "敵に騒光効果を付与するとクリティカル率が20%アップ。騒光10スタックの敵を攻撃すると回折ダメージが15%アップ。各15秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-12",
+      "name": "ミッドナイト・ベール",
+      "introducedIn": "2.0",
+      "effects": [
+        { "pieces": 2, "description": "消滅ダメージが10%アップ。" },
+        { "pieces": 5, "description": "終奏スキルで退場時、周囲へ終奏スキル扱いの消滅ダメージを与え、次の登場キャラの消滅ダメージを15%アップ（15秒）。" }
+      ]
+    },
+    {
+      "id": "sonata-13",
+      "name": "セレッシャル・アンサム",
+      "introducedIn": "2.0",
+      "effects": [
+        { "pieces": 2, "description": "共鳴効率が10%アップ。" },
+        { "pieces": 5, "description": "協同攻撃ダメージが80%アップ。協同攻撃がクリティカル時、登場中キャラの攻撃力が20%アップ（4秒）。" }
+      ]
+    },
+    {
+      "id": "sonata-14",
+      "name": "タイズターニング・ヴァラ",
+      "introducedIn": "2.0",
+      "effects": [
+        { "pieces": 2, "description": "共鳴効率が10%アップ。" },
+        { "pieces": 5, "description": "攻撃力が15%アップ。共鳴効率が250%以上の場合、全属性ダメージが30%アップ。" }
+      ]
+    },
+    {
+      "id": "sonata-15",
+      "name": "バウンドレス・スカイ",
+      "introducedIn": "2.2",
+      "effects": [
+        { "pieces": 2, "description": "気動ダメージが10%アップ。" },
+        { "pieces": 5, "description": "風蝕効果を付与した時、チーム全員の気動ダメージが15%、自身はさらに15%アップ。20秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-16",
+      "name": "グロリアス・ウィンド",
+      "introducedIn": "2.4",
+      "effects": [
+        { "pieces": 2, "description": "気動ダメージが10%アップ。" },
+        { "pieces": 5, "description": "風蝕状態の敵に命中すると、クリティカル率が10%、気動ダメージが30%アップ。10秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-17",
+      "name": "ハウリング・フレイム",
+      "introducedIn": "2.4",
+      "effects": [
+        { "pieces": 2, "description": "焦熱ダメージが10%アップ。" },
+        { "pieces": 5, "description": "共鳴解放使用時、チーム全員の焦熱ダメージが15%、自身の共鳴解放ダメージが20%アップ。35秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-18",
+      "name": "ロスト・ドリーム",
+      "introducedIn": "2.5",
+      "effects": [
+        { "pieces": 3, "description": "共鳴エネルギーが0の時、クリティカル率が20%、音骸スキルダメージが35%アップ。" }
+      ]
+    },
+    {
+      "id": "sonata-19",
+      "name": "グローリーフォージ・クラウン",
+      "introducedIn": "2.6",
+      "effects": [
+        { "pieces": 3, "description": "シールド獲得時、攻撃力が6%、クリティカルダメージが4%アップ。最大5スタック、4秒間持続、0.5秒ごとに1回発動。" }
+      ]
+    },
+    {
+      "id": "sonata-20",
+      "name": "エーテル・レゾナンス",
+      "introducedIn": "2.6",
+      "effects": [
+        { "pieces": 3, "description": "音骸スキル使用時、自身の重撃ダメージが30%アップ（4秒）。チーム全員の音骸スキルダメージが4%アップ（最大4スタック、30秒）。" }
+      ]
+    },
+    {
+      "id": "sonata-21",
+      "name": "インフェルノ・シャドウ",
+      "introducedIn": "2.7",
+      "effects": [
+        { "pieces": 3, "description": "音骸スキル命中で重撃のクリティカル率、重撃命中で音骸スキルのクリティカル率が各20%アップ（6秒）。両方の効果中は焦熱ダメージが16%アップ。" }
+      ]
+    },
+    {
+      "id": "sonata-22",
+      "name": "命理崩壊の弦",
+      "introducedIn": "2.8",
+      "effects": [
+        { "pieces": 3, "description": "虚滅効果を付与した時、攻撃力が20%、共鳴解放ダメージが30%アップ。5秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-23",
+      "name": "リフレクト・ブレイズ",
+      "introducedIn": "3.0",
+      "effects": [
+        { "pieces": 2, "description": "回折ダメージが10%アップ。" },
+        { "pieces": 5, "description": "終奏スキル後、次の登場キャラの攻撃力が15%アップ。協和破壊増強1Ptにつきさらに0.3%、最大15%追加。15秒間持続し、交代で解除。" }
+      ]
+    },
+    {
+      "id": "sonata-24",
+      "name": "スターブライト・リング",
+      "introducedIn": "3.0",
+      "effects": [
+        { "pieces": 2, "description": "HP回復効果が10%アップ。" },
+        { "pieces": 5, "description": "味方を回復した時、不協和値蓄積効率1%につきチーム全員の攻撃力が0.2%アップ（最大25%、4秒）。同名効果は重複不可。" }
+      ]
+    },
+    {
+      "id": "sonata-25",
+      "name": "ゴールデン・ヴァリアント",
+      "introducedIn": "3.0",
+      "effects": [
+        { "pieces": 2, "description": "回折ダメージが10%アップ。" },
+        { "pieces": 5, "description": "通常攻撃命中時、回折ダメージが10%アップ（最大3スタック、5秒）。最大時に共鳴解放を使うと通常攻撃ダメージが40%アップ。" }
+      ]
+    },
+    {
+      "id": "sonata-26",
+      "name": "アストロ・ロード",
+      "introducedIn": "3.1",
+      "effects": [
+        { "pieces": 2, "description": "焦熱ダメージが10%アップ。" },
+        { "pieces": 5, "description": "斉爆または震撃協和・オフセットを付与した時、クリティカル率と焦熱ダメージが各20%アップ。8秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-27",
+      "name": "パティナ・フォーム",
+      "introducedIn": "3.1",
+      "effects": [
+        { "pieces": 2, "description": "焦熱ダメージが10%アップ。" },
+        { "pieces": 5, "description": "斉爆を付与した時、焦熱ダメージが10%アップ（15秒）。その間に終奏スキルを使うと、次の登場キャラの焦熱ダメージが25%アップ（15秒）。" }
+      ]
+    },
+    {
+      "id": "sonata-28",
+      "name": "セマンティック・ウィッシュ",
+      "introducedIn": "3.1",
+      "effects": [
+        { "pieces": 2, "description": "気動ダメージが10%アップ。" },
+        { "pieces": 5, "description": "音骸スキルダメージを与えた時、音骸スキルのクリティカル率が20%、自身の気動ダメージが15%アップ。5秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-29",
+      "name": "モンタージュ・シルエット",
+      "introducedIn": "3.3",
+      "effects": [
+        { "pieces": 2, "description": "攻撃力が10%アップ。" },
+        { "pieces": 5, "description": "震撃協和または密集協和・オフセットを付与した時、チーム全員の協和破壊増強が20Ptアップ。30秒間持続し、同名効果は重複不可。" }
+      ]
+    },
+    {
+      "id": "sonata-30",
+      "name": "静寂祈念の雪",
+      "introducedIn": "3.3",
+      "effects": [
+        { "pieces": 2, "description": "凝縮ダメージが10%アップ。" },
+        { "pieces": 5, "description": "結霜付与時、凝縮ダメージが10%アップし「降雪」を獲得。降雪は共鳴解放で自身のクリティカル率、終奏スキルで次の登場キャラの凝縮ダメージを強化する。" }
+      ]
+    },
+    {
+      "id": "sonata-31",
+      "name": "ナイトメア・スペクター",
+      "introducedIn": "3.4",
+      "effects": [
+        { "pieces": 1, "description": "ハック・オフセットを付与した時、通常攻撃と重撃ダメージが35%アップ。15秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-32",
+      "name": "羽舞う塵世の歌",
+      "introducedIn": "3.5",
+      "effects": [
+        { "pieces": 2, "description": "共鳴効率が10%アップ。" },
+        { "pieces": 5, "description": "虚滅付与時は自身のクリティカル率20%・重撃ダメージ35%を強化。結霜付与時は自身の共鳴効率に応じてチームの攻撃力を最大25%強化。" }
+      ]
+    },
+    {
+      "id": "sonata-33",
+      "name": "煞を祓う浄心",
+      "introducedIn": "3.5",
+      "effects": [
+        { "pieces": 2, "description": "気動ダメージが10%アップ。" },
+        { "pieces": 5, "description": "密集協和・オフセットを付与した時、クリティカルダメージが20%、気動ダメージが30%アップ。15秒間持続。" }
+      ]
+    },
+    {
+      "id": "sonata-34",
+      "name": "冥夜を導く灯",
+      "introducedIn": "3.5",
+      "effects": [
+        { "pieces": 2, "description": "HP上限が10%アップ。" },
+        { "pieces": 5, "description": "シールド獲得時、クリティカル率が5%アップ（最大4スタック、5秒）。最大スタック時は焦熱ダメージが15%アップ。" }
+      ]
+    }
+  ]
+}

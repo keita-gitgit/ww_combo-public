@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && node scripts/build-pwa.mjs",
+    "validate:data": "node scripts/validate-echo-data.mjs",
+    "build": "npm run validate:data && tsc && vite build && node scripts/build-pwa.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
