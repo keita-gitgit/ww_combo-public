@@ -9,6 +9,7 @@ import {
   getEchoOcrAliases,
   normalizeEchoOcrText,
 } from './echoData'
+import { decodeImageBlob } from './imageDecode'
 import { matchSonataForEchoScreenshot } from './sonataIconMatcher'
 import type { EchoCost, EchoScoreStat, EchoStatId } from './types'
 
@@ -28,6 +29,23 @@ export interface EchoScreenshotOcrResult {
   substats: EchoScoreStat[]
   notices: string[]
   rawText: string
+}
+
+export type EchoScreenshotOcrErrorCode =
+  | 'image-decode'
+  | 'worker-load'
+  | 'recognition'
+  | 'analysis'
+
+export class EchoScreenshotOcrError extends Error {
+  constructor(
+    public readonly code: EchoScreenshotOcrErrorCode,
+    message: string,
+    public readonly cause?: unknown,
+  ) {
+    super(message)
+    this.name = 'EchoScreenshotOcrError'
+  }
 }
 
 interface TextMatch<T> {
@@ -173,58 +191,48 @@ function textSimilarity(left: string, right: string): number {
   )
 }
 
-function loadImage(source: Blob): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image()
-    const objectUrl = URL.createObjectURL(source)
-    image.decoding = 'async'
-    image.onload = () => {
-      URL.revokeObjectURL(objectUrl)
-      resolve(image)
-    }
-    image.onerror = () => {
-      URL.revokeObjectURL(objectUrl)
-      reject(new Error('スクリーンショットを読み込めませんでした'))
-    }
-    image.src = objectUrl
-  })
-}
-
 async function makeRecognitionCanvas(source: Blob): Promise<HTMLCanvasElement> {
-  const image = await loadImage(source)
-  const landscape = image.naturalWidth / image.naturalHeight >= 1.45
+  const image = await decodeImageBlob(source)
+  const landscape = image.width / image.height >= 1.45
   const crop = landscape
     ? {
-        left: image.naturalWidth * 0.685,
-        top: image.naturalHeight * 0.075,
-        width: image.naturalWidth * 0.305,
-        height: image.naturalHeight * 0.6,
+        left: image.width * 0.685,
+        top: image.height * 0.075,
+        width: image.width * 0.305,
+        height: image.height * 0.6,
       }
     : {
-        left: image.naturalWidth * 0.03,
-        top: image.naturalHeight * 0.06,
-        width: image.naturalWidth * 0.94,
-        height: image.naturalHeight * 0.55,
+        left: image.width * 0.03,
+        top: image.height * 0.06,
+        width: image.width * 0.94,
+        height: image.height * 0.55,
       }
   const scale = clamp(1080 / crop.width, 2.2, 5.5)
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(crop.width * scale)
   canvas.height = Math.round(crop.height * scale)
   const context = canvas.getContext('2d', { willReadFrequently: true })
-  if (!context) throw new Error('画像解析用Canvasを作成できませんでした')
+  if (!context) {
+    image.dispose()
+    throw new Error('画像解析用Canvasを作成できませんでした')
+  }
   context.imageSmoothingEnabled = true
   context.imageSmoothingQuality = 'high'
-  context.drawImage(
-    image,
-    crop.left,
-    crop.top,
-    crop.width,
-    crop.height,
-    0,
-    0,
-    canvas.width,
-    canvas.height,
-  )
+  try {
+    context.drawImage(
+      image.source,
+      crop.left,
+      crop.top,
+      crop.width,
+      crop.height,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    )
+  } finally {
+    image.dispose()
+  }
 
   const pixels = context.getImageData(0, 0, canvas.width, canvas.height)
   for (let index = 0; index < pixels.data.length; index += 4) {
@@ -253,6 +261,7 @@ async function getWorker(): Promise<OcrWorker> {
       workerPath: new URL('ocr/worker.min.js', document.baseURI).href,
       corePath: new URL('ocr/core/', document.baseURI).href,
       langPath: new URL('ocr/lang/', document.baseURI).href,
+      workerBlobURL: false,
       logger: (message) => {
         const progress = Number.isFinite(message.progress) ? message.progress : 0
         if (message.status === 'recognizing text') {
@@ -509,58 +518,94 @@ export async function recognizeEchoScreenshot(
   activeProgress = onProgress
   try {
     reportProgress(0.02, '画像を準備中')
-    const canvas = await makeRecognitionCanvas(source)
+    let canvas: HTMLCanvasElement
+    try {
+      canvas = await makeRecognitionCanvas(source)
+    } catch (error) {
+      throw new EchoScreenshotOcrError(
+        'image-decode',
+        'スクリーンショットを読み込めませんでした',
+        error,
+      )
+    }
     reportProgress(0.08, '日本語OCRを準備中')
-    const worker = await getWorker()
+    let worker: OcrWorker
+    try {
+      worker = await getWorker()
+    } catch (error) {
+      throw new EchoScreenshotOcrError(
+        'worker-load',
+        '日本語OCRを準備できませんでした',
+        error,
+      )
+    }
     reportProgress(0.28, '文字を読み取り中')
-    const recognition = await worker.recognize(canvas)
+    let recognition: Awaited<ReturnType<OcrWorker['recognize']>>
+    try {
+      recognition = await worker.recognize(canvas)
+    } catch (error) {
+      throw new EchoScreenshotOcrError(
+        'recognition',
+        'スクリーンショットの文字を認識できませんでした',
+        error,
+      )
+    }
     const rawText = normalizeRecognitionText(recognition.data.text)
     const lines = rawText
       .split(/\r?\n/)
       .map((line) => line.trim())
       .filter(Boolean)
 
-    reportProgress(0.91, '音骸データと照合中')
-    let cost = extractCost(rawText)
-    const echoMatch = matchEcho(lines, cost)
-    const echoId =
-      echoMatch && echoMatch.score >= 0.34 ? echoMatch.value : ''
-    const matchedEcho = ECHO_BY_ID.get(echoId)
-    cost ||= matchedEcho?.cost ?? ''
-    const mainMatch = matchMainStat(lines, cost)
-    const parsedSubstats = parseSubstats(lines, cost)
-    let sonataId = matchedEcho?.sonataIds[0] ?? ''
-    let sonataReliable = matchedEcho?.sonataIds.length === 1
+    try {
+      reportProgress(0.91, '音骸データと照合中')
+      let cost = extractCost(rawText)
+      const echoMatch = matchEcho(lines, cost)
+      const echoId =
+        echoMatch && echoMatch.score >= 0.34 ? echoMatch.value : ''
+      const matchedEcho = ECHO_BY_ID.get(echoId)
+      cost ||= matchedEcho?.cost ?? ''
+      const mainMatch = matchMainStat(lines, cost)
+      const parsedSubstats = parseSubstats(lines, cost)
+      let sonataId = matchedEcho?.sonataIds[0] ?? ''
+      let sonataReliable = matchedEcho?.sonataIds.length === 1
 
-    if (matchedEcho) {
-      try {
-        const sonata = await matchSonataForEchoScreenshot(source, matchedEcho.id)
-        if (sonata) {
-          sonataId = sonata.sonataId
-          sonataReliable = sonata.reliable
+      if (matchedEcho) {
+        try {
+          const sonata = await matchSonataForEchoScreenshot(source, matchedEcho.id)
+          if (sonata) {
+            sonataId = sonata.sonataId
+            sonataReliable = sonata.reliable
+          }
+        } catch {
+          sonataReliable = false
         }
-      } catch {
-        sonataReliable = false
       }
-    }
 
-    const notices = makeNotices(
-      cost,
-      echoMatch,
-      sonataReliable,
-      mainMatch,
-      parsedSubstats,
-    )
-    reportProgress(1, '読み取り完了')
-    return {
-      cost,
-      echoId,
-      sonataId,
-      mainStatId:
-        mainMatch && mainMatch.score >= 0.56 ? mainMatch.value : '',
-      substats: parsedSubstats.map(({ id, value }) => ({ id, value })),
-      notices,
-      rawText,
+      const notices = makeNotices(
+        cost,
+        echoMatch,
+        sonataReliable,
+        mainMatch,
+        parsedSubstats,
+      )
+      reportProgress(1, '読み取り完了')
+      return {
+        cost,
+        echoId,
+        sonataId,
+        mainStatId:
+          mainMatch && mainMatch.score >= 0.56 ? mainMatch.value : '',
+        substats: parsedSubstats.map(({ id, value }) => ({ id, value })),
+        notices,
+        rawText,
+      }
+    } catch (error) {
+      if (error instanceof EchoScreenshotOcrError) throw error
+      throw new EchoScreenshotOcrError(
+        'analysis',
+        '読み取り結果を音骸データと照合できませんでした',
+        error,
+      )
     }
   } finally {
     activeProgress = undefined

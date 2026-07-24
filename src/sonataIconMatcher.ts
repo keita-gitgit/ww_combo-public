@@ -1,4 +1,5 @@
 import { ECHO_BY_ID, SONATA_BY_ID, SONATA_ICON_BY_ID } from './echoData'
+import { decodeImageBlob } from './imageDecode'
 
 export interface SonataIconMatchAlternative {
   sonataId: string
@@ -31,14 +32,23 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   })
 }
 
-async function loadScreenshot(source: Blob | HTMLImageElement): Promise<HTMLImageElement> {
-  if (source instanceof HTMLImageElement) return source
-  const objectUrl = URL.createObjectURL(source)
-  try {
-    return await loadImage(objectUrl)
-  } finally {
-    URL.revokeObjectURL(objectUrl)
+async function loadScreenshot(
+  source: Blob | HTMLImageElement,
+): Promise<{
+  source: CanvasImageSource
+  width: number
+  height: number
+  dispose: () => void
+}> {
+  if (source instanceof HTMLImageElement) {
+    return {
+      source,
+      width: source.naturalWidth,
+      height: source.naturalHeight,
+      dispose: () => {},
+    }
   }
+  return decodeImageBlob(source)
 }
 
 function getReferenceImage(sonataId: string): Promise<HTMLImageElement> {
@@ -196,14 +206,21 @@ export async function matchSonataIconFromScreenshot(
   }
 
   const screenshotImage = await loadScreenshot(source)
-  const workingScale = Math.min(1, 960 / screenshotImage.naturalWidth)
+  const workingScale = Math.min(1, 960 / screenshotImage.width)
   const canvas = makeCanvas(
-    Math.round(screenshotImage.naturalWidth * workingScale),
-    Math.round(screenshotImage.naturalHeight * workingScale),
+    Math.round(screenshotImage.width * workingScale),
+    Math.round(screenshotImage.height * workingScale),
   )
   const context = canvas.getContext('2d', { willReadFrequently: true })
-  if (!context) throw new Error('スクリーンショット解析用Canvasを作成できません')
-  context.drawImage(screenshotImage, 0, 0, canvas.width, canvas.height)
+  if (!context) {
+    screenshotImage.dispose()
+    throw new Error('スクリーンショット解析用Canvasを作成できません')
+  }
+  try {
+    context.drawImage(screenshotImage.source, 0, 0, canvas.width, canvas.height)
+  } finally {
+    screenshotImage.dispose()
+  }
   const screenshot = context.getImageData(0, 0, canvas.width, canvas.height)
 
   const scored = await Promise.all(

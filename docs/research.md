@@ -200,5 +200,10 @@ ComboAction（1 つの技）
 - 読み取れなかった項目や確度が低い候補は警告として表示し、未入力のまま手動補完できる。
 - `public/ocr/` にWorker・WASMコア・日本語学習データを置き、PWAの事前キャッシュへ含める。
   初回解析時は読み込みに時間がかかるが、以後は同じWorkerを再利用し、オフラインでも動作する。
+- ユーザー画像は `createImageBitmap` で端末内デコードし、非対応端末だけdata URLへフォールバックする。
+  CSPで禁止しているblob URLは使用しない。OCR Workerも同一オリジンの同梱ファイルから直接起動する。
+- CSPは画像・Workerの外部通信を許可せず、TesseractのWASM実行に必要な
+  `'wasm-unsafe-eval'` だけをスクリプトポリシーへ追加する。
+- 失敗時は画像デコード、Worker起動、文字認識、解析の段階を分けて案内し、再試行方法を判断できるようにする。
 - `npm run sync:ocr-assets` で依存パッケージから同梱ファイルを同期し、
-  `npm run build` では不足・破損したOCRアセットがないことを先に検査する。
+  `npm run build` では不足・破損したOCRアセットとCSP関連設定を先に検査する。

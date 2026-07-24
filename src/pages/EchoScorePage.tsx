@@ -1,7 +1,10 @@
 import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import Avatar from '../components/Avatar'
 import { ECHO_BY_ID, ECHOES, SONATA_BY_ID, normalizeEchoOcrText } from '../echoData'
-import { recognizeEchoScreenshot } from '../echoScreenshotOcr'
+import {
+  EchoScreenshotOcrError,
+  recognizeEchoScreenshot,
+} from '../echoScreenshotOcr'
 import {
   ECHO_SCORE_FORMULA_VERSION,
   ECHO_SCORE_PROFILES,
@@ -364,13 +367,16 @@ export default function EchoScorePage({ data, setData }: Props) {
   }
 
   const importScreenshot = async (file?: File) => {
-    if (ocrInputRef.current) ocrInputRef.current.value = ''
     if (!file) return
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    const supportedImage =
+      ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) ||
+      (file.type === '' && /\.(?:jpe?g|png|webp)$/i.test(file.name))
+    if (!supportedImage) {
       setOcrFeedback({
         kind: 'error',
         message: 'JPEG・PNG・WebPの画像を選択してください。',
       })
+      if (ocrInputRef.current) ocrInputRef.current.value = ''
       return
     }
     if (file.size > MAX_ECHO_SCREENSHOT_BYTES) {
@@ -378,12 +384,14 @@ export default function EchoScorePage({ data, setData }: Props) {
         kind: 'error',
         message: '画像は20MB以下にしてください。',
       })
+      if (ocrInputRef.current) ocrInputRef.current.value = ''
       return
     }
     if (
       hasSlotData(activeSlot) &&
       !confirm(`音骸${activeSlot.position}の入力を読み取り結果で置き換えますか？`)
     ) {
+      if (ocrInputRef.current) ocrInputRef.current.value = ''
       return
     }
 
@@ -436,12 +444,25 @@ export default function EchoScorePage({ data, setData }: Props) {
       })
     } catch (error) {
       console.error(error)
+      const message =
+        error instanceof EchoScreenshotOcrError
+          ? {
+              'image-decode':
+                '画像を開けませんでした。JPEG・PNGのゲーム画面を選択してください。',
+              'worker-load':
+                'OCRの準備に失敗しました。アプリを再読み込みしてからお試しください。',
+              recognition:
+                '文字認識中にエラーが発生しました。別のスクリーンショットでもお試しください。',
+              analysis:
+                '文字は読み取れましたが、音骸データとの照合に失敗しました。',
+            }[error.code]
+          : '画像を読み取れませんでした。ゲーム内の音骸詳細画面をそのまま選択してください。'
       setOcrFeedback({
         kind: 'error',
-        message:
-          '画像を読み取れませんでした。ゲーム内の音骸詳細画面をそのまま選択してください。',
+        message,
       })
     } finally {
+      if (ocrInputRef.current) ocrInputRef.current.value = ''
       setOcrBusy(false)
     }
   }

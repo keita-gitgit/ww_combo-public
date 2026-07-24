@@ -1,4 +1,4 @@
-import { stat } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 
 const files = [
   ['public/ocr/worker.min.js', 50_000],
@@ -30,4 +30,42 @@ if (missing.length > 0) {
   process.exit(1)
 }
 
-console.log(`OCRアセット: ${files.length}件`)
+const sourceChecks = [
+  {
+    path: 'index.html',
+    required: ["script-src 'self' 'wasm-unsafe-eval'"],
+    forbidden: [],
+  },
+  {
+    path: 'src/echoScreenshotOcr.ts',
+    required: ['workerBlobURL: false', 'decodeImageBlob'],
+    forbidden: ['URL.createObjectURL'],
+  },
+  {
+    path: 'src/sonataIconMatcher.ts',
+    required: ['decodeImageBlob'],
+    forbidden: ['URL.createObjectURL'],
+  },
+]
+
+const invalidSettings = []
+for (const check of sourceChecks) {
+  const source = await readFile(new URL(`../${check.path}`, import.meta.url), 'utf8')
+  for (const required of check.required) {
+    if (!source.includes(required)) {
+      invalidSettings.push(`${check.path}: ${required} が設定されていません`)
+    }
+  }
+  for (const forbidden of check.forbidden) {
+    if (source.includes(forbidden)) {
+      invalidSettings.push(`${check.path}: ${forbidden} はCSPで使用できません`)
+    }
+  }
+}
+
+if (invalidSettings.length > 0) {
+  console.error(`OCRブラウザ設定の検証に失敗しました:\n- ${invalidSettings.join('\n- ')}`)
+  process.exit(1)
+}
+
+console.log(`OCRアセット: ${files.length}件 / ブラウザ設定: ${sourceChecks.length}件`)
