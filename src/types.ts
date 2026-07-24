@@ -112,6 +112,30 @@ export interface SavedEchoScore {
   updatedAt: string
 }
 
+export interface EchoLoadoutSlot {
+  id: string
+  position: 1 | 2 | 3 | 4 | 5
+  echoId: string
+  sonataId: string
+  mainStatId: EchoStatId
+  substats: EchoScoreStat[]
+  score: number
+  rank: EchoScoreRank
+}
+
+export interface SavedEchoLoadout {
+  id: string
+  characterId: string
+  scoreProfile: EchoScoreProfile
+  /** 入力済みの装備枠。新規保存は5枠、旧1音骸記録の移行直後のみ1〜4枠を許容する */
+  slots: EchoLoadoutSlot[]
+  /** 5枠それぞれのサブステータススコア合計 */
+  totalScore: number
+  formulaVersion: 'generic-v1'
+  createdAt: string
+  updatedAt: string
+}
+
 export interface CharacterAction {
   id: string
   name: string
@@ -190,7 +214,9 @@ export interface AppData {
   characters: Character[]
   parties: Party[]
   combos: Combo[]
-  /** 採点済み音骸。画像は保存せず、読み取った値だけを保持する */
+  /** キャラごとの5枠音骸セット。画像は保存せず、入力値だけを保持する */
+  echoLoadouts?: SavedEchoLoadout[]
+  /** @deprecated 旧版の音骸1個単位の記録。読み込み時に echoLoadouts へ移行する */
   echoScores?: SavedEchoScore[]
   /** 技名 → PS5ボタン表記の対応表（設定画面で編集可能） */
   buttonMap?: Record<string, string>

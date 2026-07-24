@@ -70,3 +70,6 @@ export function getEchoScoreRank(score: number): EchoScoreRank {
   return 'D'
 }
 
+export function calculateEchoLoadoutTotal(scores: readonly number[]): number {
+  return Math.round(scores.reduce((total, score) => total + score, 0) * 10) / 10
+}

@@ -8,15 +8,21 @@ import type {
   ComboCardTone,
   ComboAction,
   ComboStep,
+  EchoLoadoutSlot,
   EchoScoreProfile,
   EchoScoreRank,
   EchoScoreStat,
   EchoStatId,
   Party,
+  SavedEchoLoadout,
   SavedEchoScore,
 } from './types'
 import { makeSeedData, syncRoster, DEFAULT_BUTTON_MAP } from './seed'
-import { calculateEchoScore, getEchoScoreRank } from './echoScoring'
+import {
+  calculateEchoLoadoutTotal,
+  calculateEchoScore,
+  getEchoScoreRank,
+} from './echoScoring'
 
 const STORAGE_KEY = 'ww_combo_data_v1'
 export const MAX_IMPORT_BYTES = 5 * 1024 * 1024
@@ -26,6 +32,7 @@ const MAX_ACTIONS_PER_CHARACTER = 1_000
 const MAX_PARTIES = 2_000
 const MAX_COMBOS = 5_000
 const MAX_ECHO_SCORES = 5_000
+const MAX_ECHO_LOADOUTS = 5_000
 const MAX_STEPS_PER_COMBO = 10_000
 const MAX_ACTIONS_PER_STEP = 1_000
 const MAX_REFERENCE_URLS = 20
@@ -255,6 +262,91 @@ function isEchoScore(value: unknown): value is SavedEchoScore {
   return value.score === expectedScore && value.rank === getEchoScoreRank(expectedScore)
 }
 
+function isEchoLoadoutSlot(value: unknown): value is EchoLoadoutSlot {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== 'string' ||
+    typeof value.position !== 'number' ||
+    ![1, 2, 3, 4, 5].includes(value.position) ||
+    typeof value.echoId !== 'string' ||
+    typeof value.sonataId !== 'string' ||
+    typeof value.mainStatId !== 'string' ||
+    !ECHO_STAT_IDS.has(value.mainStatId as EchoStatId) ||
+    !Array.isArray(value.substats) ||
+    value.substats.length === 0 ||
+    value.substats.length > 5 ||
+    typeof value.score !== 'number' ||
+    !Number.isFinite(value.score) ||
+    value.score < 0 ||
+    value.score > 1_000 ||
+    typeof value.rank !== 'string' ||
+    !ECHO_SCORE_RANKS.has(value.rank as EchoScoreRank)
+  ) {
+    return false
+  }
+
+  const statIds = new Set<string>()
+  const substats: EchoScoreStat[] = []
+  for (const stat of value.substats) {
+    if (
+      !isRecord(stat) ||
+      typeof stat.id !== 'string' ||
+      !ECHO_STAT_IDS.has(stat.id as EchoStatId) ||
+      statIds.has(stat.id) ||
+      typeof stat.value !== 'number' ||
+      !Number.isFinite(stat.value) ||
+      stat.value < 0 ||
+      stat.value > 10_000
+    ) {
+      return false
+    }
+    statIds.add(stat.id)
+    substats.push({ id: stat.id as EchoStatId, value: stat.value })
+  }
+
+  const profiles = [...ECHO_SCORE_PROFILES]
+  return profiles.some((profile) => {
+    const expectedScore = calculateEchoScore(substats, profile)
+    return value.score === expectedScore && value.rank === getEchoScoreRank(expectedScore)
+  })
+}
+
+function isEchoLoadout(value: unknown): value is SavedEchoLoadout {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== 'string' ||
+    typeof value.characterId !== 'string' ||
+    typeof value.scoreProfile !== 'string' ||
+    !ECHO_SCORE_PROFILES.has(value.scoreProfile as EchoScoreProfile) ||
+    !Array.isArray(value.slots) ||
+    value.slots.length === 0 ||
+    value.slots.length > 5 ||
+    !value.slots.every(isEchoLoadoutSlot) ||
+    typeof value.totalScore !== 'number' ||
+    !Number.isFinite(value.totalScore) ||
+    value.totalScore < 0 ||
+    value.totalScore > 5_000 ||
+    value.formulaVersion !== 'generic-v1' ||
+    typeof value.createdAt !== 'string' ||
+    typeof value.updatedAt !== 'string'
+  ) {
+    return false
+  }
+
+  const slotIds = new Set(value.slots.map((slot) => slot.id))
+  const slotPositions = new Set(value.slots.map((slot) => slot.position))
+  if (slotIds.size !== value.slots.length || slotPositions.size !== value.slots.length) return false
+  const profile = value.scoreProfile as EchoScoreProfile
+  const slotsAreConsistent = value.slots.every((slot) => {
+    const expectedScore = calculateEchoScore(slot.substats, profile)
+    return slot.score === expectedScore && slot.rank === getEchoScoreRank(expectedScore)
+  })
+  return (
+    slotsAreConsistent &&
+    value.totalScore === calculateEchoLoadoutTotal(value.slots.map((slot) => slot.score))
+  )
+}
+
 function isButtonMap(value: unknown): value is Record<string, string> | undefined {
   if (value === undefined) return true
   if (!isRecord(value)) return false
@@ -282,8 +374,54 @@ function isAppData(value: unknown): value is AppData {
       (Array.isArray(value.echoScores) &&
         value.echoScores.length <= MAX_ECHO_SCORES &&
         value.echoScores.every(isEchoScore))) &&
+    (value.echoLoadouts === undefined ||
+      (Array.isArray(value.echoLoadouts) &&
+        value.echoLoadouts.length <= MAX_ECHO_LOADOUTS &&
+        value.echoLoadouts.every(isEchoLoadout))) &&
     isButtonMap(value.buttonMap)
   )
+}
+
+function migrateEchoScores(data: AppData): AppData {
+  const legacyRecords = data.echoScores ?? []
+  if (legacyRecords.length === 0) {
+    if (data.echoScores !== undefined || data.echoLoadouts === undefined) {
+      return { ...data, echoLoadouts: data.echoLoadouts ?? [], echoScores: undefined }
+    }
+    return data
+  }
+
+  const existing = data.echoLoadouts ?? []
+  const existingIds = new Set(existing.map((loadout) => loadout.id))
+  const migrated: SavedEchoLoadout[] = legacyRecords
+    .filter((record) => !existingIds.has(record.id))
+    .map((record) => ({
+      id: record.id,
+      characterId: record.characterId,
+      scoreProfile: record.scoreProfile,
+      slots: [
+        {
+          id: `${record.id}-slot-1`,
+          position: 1,
+          echoId: record.echoId,
+          sonataId: record.sonataId,
+          mainStatId: record.mainStatId,
+          substats: record.substats,
+          score: record.score,
+          rank: record.rank,
+        },
+      ],
+      totalScore: record.score,
+      formulaVersion: record.formulaVersion,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    }))
+
+  return {
+    ...data,
+    echoLoadouts: [...existing, ...migrated],
+    echoScores: undefined,
+  }
 }
 
 function migrateButtonMap(buttonMap?: Record<string, string>): Record<string, string> {
@@ -312,7 +450,9 @@ export function loadData(): AppData {
       const parsed: unknown = JSON.parse(raw)
       // 公式キャラ一覧・基本技・ボタン対応表を保存済みデータに反映してから返す
       if (isAppData(parsed)) {
-        return syncRoster({ ...parsed, buttonMap: migrateButtonMap(parsed.buttonMap) })
+        return migrateEchoScores(
+          syncRoster({ ...parsed, buttonMap: migrateButtonMap(parsed.buttonMap) }),
+        )
       }
     }
   } catch (e) {
@@ -349,5 +489,7 @@ export function parseImportedData(text: string): AppData {
   if (!isAppData(parsed)) {
     throw new Error('バックアップファイルの形式が正しくありません')
   }
-  return syncRoster({ ...parsed, buttonMap: migrateButtonMap(parsed.buttonMap) })
+  return migrateEchoScores(
+    syncRoster({ ...parsed, buttonMap: migrateButtonMap(parsed.buttonMap) }),
+  )
 }
