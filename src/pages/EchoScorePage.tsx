@@ -1,6 +1,18 @@
-import { useMemo, useRef, useState, type CSSProperties } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react'
 import Avatar from '../components/Avatar'
 import { ECHO_BY_ID, ECHOES, SONATA_BY_ID, normalizeEchoOcrText } from '../echoData'
+import {
+  createEchoShareImage,
+  downloadEchoShareImage,
+  getEchoShareImageFileName,
+  shareEchoShareImage,
+} from '../echoShareImage'
 import {
   EchoScreenshotOcrError,
   recognizeEchoScreenshot,
@@ -26,6 +38,7 @@ import type {
   EchoScoreStat,
   EchoStatId,
   SavedEchoLoadout,
+  Character,
 } from '../types'
 import { newId } from '../types'
 
@@ -61,6 +74,13 @@ interface OcrFeedback {
   message: string
   progress?: number
   notices?: string[]
+}
+
+interface SharePreview {
+  blob: Blob
+  url: string
+  fileName: string
+  character?: Character
 }
 
 const SLOT_POSITIONS = [1, 2, 3, 4, 5] as const
@@ -211,7 +231,17 @@ export default function EchoScorePage({ data, setData }: Props) {
   const [showEchoResults, setShowEchoResults] = useState(false)
   const [ocrBusy, setOcrBusy] = useState(false)
   const [ocrFeedback, setOcrFeedback] = useState<OcrFeedback>()
+  const [shareBusyId, setShareBusyId] = useState<string>()
+  const [sharePreview, setSharePreview] = useState<SharePreview>()
+  const [shareError, setShareError] = useState<string>()
   const ocrInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(
+    () => () => {
+      if (sharePreview?.url) URL.revokeObjectURL(sharePreview.url)
+    },
+    [sharePreview],
+  )
 
   const activeSlot = draft.slots[activeSlotIndex]
   const selectedEcho = ECHO_BY_ID.get(activeSlot.echoId)
@@ -467,16 +497,7 @@ export default function EchoScorePage({ data, setData }: Props) {
     }
   }
 
-  const save = () => {
-    if (
-      !draft.characterId ||
-      completedSlots.length === 0 ||
-      hasIncompleteSlot ||
-      totalCost > 12
-    ) {
-      return
-    }
-
+  const buildDraftRecord = (): SavedEchoLoadout => {
     const slots: EchoLoadoutSlot[] = completedSlots.map((slot) => {
       const score = getSlotScore(slot, draft.scoreProfile, selectedCharacter?.name)
       return {
@@ -495,7 +516,7 @@ export default function EchoScorePage({ data, setData }: Props) {
     })
     const now = new Date().toISOString()
     const previous = records.find((record) => record.id === draft.id)
-    const record: SavedEchoLoadout = {
+    return {
       id: draft.id ?? newId(),
       characterId: draft.characterId,
       scoreProfile: draft.scoreProfile,
@@ -505,7 +526,18 @@ export default function EchoScorePage({ data, setData }: Props) {
       createdAt: previous?.createdAt ?? now,
       updatedAt: now,
     }
+  }
 
+  const save = () => {
+    if (
+      !draft.characterId ||
+      completedSlots.length === 0 ||
+      hasIncompleteSlot ||
+      totalCost > 12
+    ) {
+      return
+    }
+    const record = buildDraftRecord()
     setData({
       ...data,
       echoLoadouts: [record, ...records.filter((candidate) => candidate.id !== record.id)],
@@ -522,6 +554,104 @@ export default function EchoScorePage({ data, setData }: Props) {
       echoLoadouts: records.filter((candidate) => candidate.id !== record.id),
     })
   }
+
+  const openSharePreview = async (
+    record: SavedEchoLoadout,
+    character?: Character,
+  ) => {
+    setShareBusyId(record.id)
+    setShareError(undefined)
+    try {
+      const blob = await createEchoShareImage(record, character)
+      const url = URL.createObjectURL(blob)
+      setSharePreview({
+        blob,
+        url,
+        fileName: getEchoShareImageFileName(character),
+        character,
+      })
+    } catch (error) {
+      console.error(error)
+      setShareError(
+        error instanceof Error
+          ? error.message
+          : '共有画像を作成できませんでした。',
+      )
+    } finally {
+      setShareBusyId(undefined)
+    }
+  }
+
+  const sharePreviewImage = async () => {
+    if (!sharePreview) return
+    try {
+      const shared = await shareEchoShareImage(
+        sharePreview.blob,
+        sharePreview.fileName,
+        sharePreview.character,
+      )
+      if (!shared) {
+        downloadEchoShareImage(sharePreview.blob, sharePreview.fileName)
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      console.error(error)
+      setShareError('共有できませんでした。PNG保存をお試しください。')
+    }
+  }
+
+  const shareDialog = sharePreview ? (
+    <div
+      className="echo-share-backdrop"
+      role="presentation"
+      onClick={() => setSharePreview(undefined)}
+    >
+      <section
+        className="echo-share-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="echo-share-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header>
+          <span>
+            <small>1600 × 1000 PNG</small>
+            <strong id="echo-share-title">共有画像ができました</strong>
+          </span>
+          <button
+            className="icon-btn"
+            onClick={() => setSharePreview(undefined)}
+            aria-label="共有画像を閉じる"
+          >
+            ×
+          </button>
+        </header>
+        <img
+          className="echo-share-preview"
+          src={sharePreview.url}
+          alt={`${sharePreview.character?.name ?? 'キャラ'}の音骸スコア共有画像`}
+        />
+        <div className="echo-share-actions">
+          <button
+            onClick={() =>
+              downloadEchoShareImage(
+                sharePreview.blob,
+                sharePreview.fileName,
+              )
+            }
+          >
+            PNGを保存
+          </button>
+          <button className="primary" onClick={() => void sharePreviewImage()}>
+            共有する
+          </button>
+        </div>
+        <small className="echo-share-hint">
+          iPhoneでは「共有する」から“画像を保存”やSNSを選べます
+        </small>
+      </section>
+    </div>
+  ) : null
 
   if (!editing) {
     return (
@@ -586,6 +716,13 @@ export default function EchoScorePage({ data, setData }: Props) {
                       })}
                   </div>
                   <button
+                    className="echo-record-share"
+                    disabled={Boolean(shareBusyId)}
+                    onClick={() => void openSharePreview(record, character)}
+                  >
+                    {shareBusyId === record.id ? '画像を作成中…' : '共有画像'}
+                  </button>
+                  <button
                     className="icon-btn echo-record-delete"
                     onClick={() => removeRecord(record)}
                     aria-label={`${character?.name ?? '音骸セット'}を削除`}
@@ -597,6 +734,8 @@ export default function EchoScorePage({ data, setData }: Props) {
             })}
           </div>
         )}
+        {shareError && <p className="echo-share-error">{shareError}</p>}
+        {shareDialog}
       </div>
     )
   }
@@ -1048,13 +1187,26 @@ export default function EchoScorePage({ data, setData }: Props) {
       {totalCost > 12 && (
         <p className="echo-save-warning">合計コストが12を超えています。</p>
       )}
-      <button className="primary echo-save-button" disabled={!canSave} onClick={save}>
-        {draft.id
-          ? '変更を保存'
-          : completedSlots.length === 5
-            ? 'この5枠を保存'
-            : `下書きを保存（${completedSlots.length}/5）`}
-      </button>
+      {shareError && <p className="echo-share-error">{shareError}</p>}
+      <div className="echo-editor-actions">
+        <button
+          className="echo-create-share-button"
+          disabled={!canSave || Boolean(shareBusyId)}
+          onClick={() =>
+            void openSharePreview(buildDraftRecord(), selectedCharacter)
+          }
+        >
+          {shareBusyId ? '画像を作成中…' : '共有画像を作成'}
+        </button>
+        <button className="primary echo-save-button" disabled={!canSave} onClick={save}>
+          {draft.id
+            ? '変更を保存'
+            : completedSlots.length === 5
+              ? 'この5枠を保存'
+              : `下書きを保存（${completedSlots.length}/5）`}
+        </button>
+      </div>
+      {shareDialog}
     </div>
   )
 }

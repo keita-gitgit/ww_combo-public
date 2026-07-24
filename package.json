@@ -7,10 +7,12 @@
     "dev": "vite",
     "sync:ocr-assets": "node scripts/sync-ocr-assets.mjs",
     "sync:sonata-icons": "node scripts/download-sonata-icons.mjs",
+    "sync:character-art": "node scripts/sync-character-art.mjs",
     "validate:data": "node scripts/validate-echo-data.mjs",
     "validate:score": "node scripts/validate-echo-score-weights.mjs",
     "validate:ocr": "node scripts/validate-ocr-assets.mjs",
-    "build": "npm run validate:data && npm run validate:score && npm run validate:ocr && tsc && vite build && node scripts/build-pwa.mjs",
+    "validate:character-art": "node scripts/validate-character-art.mjs",
+    "build": "npm run validate:data && npm run validate:score && npm run validate:ocr && npm run validate:character-art && tsc && vite build && node scripts/build-pwa.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
