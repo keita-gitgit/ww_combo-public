@@ -9,7 +9,7 @@ export interface CharacterEchoScoreWeights {
  * GameWith「音骸スコアチェッカー」のキャラ別評価係数。
  * 2026-07-24取得。アプリをオフラインで使えるよう静的データとして保持する。
  */
-export const CHARACTER_ECHO_SCORE_WEIGHTS: Readonly<Record<string, CharacterEchoScoreWeights>> = {
+const BASE_CHARACTER_ECHO_SCORE_WEIGHTS = {
   "漂泊者（回折）": { substats: {"critRate":2,"critDamage":1,"resonanceLiberationDamage":0.5,"resonanceSkillDamage":1,"energyRegen":0.5,"attackPercent":1,"attack":0.05}, mainStats: { 1: {"attackPercent":1}, 3: {"attackPercent":0.5,"spectroDamage":1}, 4: {"critRate":1,"critDamage":1,"attackPercent":0.1} } },
   "鑑心": { substats: {"critRate":2,"critDamage":1,"heavyAttackDamage":0.5,"resonanceLiberationDamage":1,"energyRegen":0.5,"attackPercent":1,"attack":0.05}, mainStats: { 1: {"attackPercent":1,"aeroDamage":1}, 3: {"attackPercent":0.5,"aeroDamage":1}, 4: {"critRate":1,"critDamage":1,"attackPercent":0.1,"aeroDamage":1} } },
   "凌陽": { substats: {"critRate":2,"critDamage":1,"basicAttackDamage":1,"resonanceSkillDamage":0.5,"energyRegen":0.5,"attackPercent":1,"attack":0.05}, mainStats: { 1: {"attackPercent":1}, 3: {"attackPercent":0.5,"glacioDamage":1}, 4: {"critRate":1,"critDamage":1,"attackPercent":0.1} } },
@@ -65,13 +65,149 @@ export const CHARACTER_ECHO_SCORE_WEIGHTS: Readonly<Record<string, CharacterEcho
   "ルシラー": { substats: {"critRate":2,"critDamage":1,"basicAttackDamage":1,"attackPercent":1.25,"attack":0.05}, mainStats: { 1: {"attackPercent":1}, 3: {"attackPercent":1,"glacioDamage":1}, 4: {"critRate":1,"critDamage":1,"attackPercent":1} } },
   "秧秧・玄翎": { substats: {"critRate":2,"critDamage":1,"heavyAttackDamage":1,"attackPercent":1,"attack":0.05}, mainStats: { 1: {"attackPercent":1}, 3: {"attackPercent":1,"havocDamage":1}, 4: {"critRate":1,"critDamage":1,"attackPercent":1} } },
   "漂泊者（電導）": { substats: {"critRate":2,"critDamage":1,"resonanceLiberationDamage":0.5,"resonanceSkillDamage":1,"energyRegen":0.5,"attackPercent":1,"attack":0.05}, mainStats: { 1: {"attackPercent":1}, 3: {"energyRegen":1,"attackPercent":1,"electroDamage":1}, 4: {"critRate":1,"critDamage":1,"attackPercent":1} } },
+} satisfies Readonly<Record<string, CharacterEchoScoreWeights>>
+
+export type EchoActionDamageStatId =
+  | 'basicAttackDamage'
+  | 'heavyAttackDamage'
+  | 'resonanceSkillDamage'
+  | 'resonanceLiberationDamage'
+
+export const ECHO_SCORE_FLAT_STAT_WEIGHT = 0.1
+export const ECHO_SCORE_ACTION_DAMAGE_WEIGHT = 0.7
+
+/**
+ * キャラごとにスコアへ含める攻撃種別ダメージアップ。
+ * GameWithのキャラ別評価で最も評価が高い1種類を採用し、同評価の場合は
+ * 個別攻略ページのスキル優先度と主力攻撃区分で決定する。
+ * 火力オプションを推奨していないサポーターはnullとする。
+ */
+export const CHARACTER_ECHO_SCORE_ACTION_DAMAGE_STAT = {
+  '漂泊者（回折）': 'resonanceSkillDamage',
+  鑑心: 'resonanceLiberationDamage',
+  凌陽: 'basicAttackDamage',
+  カカロ: 'resonanceLiberationDamage',
+  忌炎: 'heavyAttackDamage',
+  吟霖: 'resonanceSkillDamage',
+  ヴェリーナ: null,
+  アンコ: 'basicAttackDamage',
+  淵武: 'resonanceSkillDamage',
+  丹瑾: 'heavyAttackDamage',
+  散華: 'resonanceSkillDamage',
+  モルトフィー: 'resonanceLiberationDamage',
+  桃祈: 'resonanceLiberationDamage',
+  アールト: 'resonanceSkillDamage',
+  白芷: null,
+  秧秧: 'resonanceLiberationDamage',
+  熾霞: 'resonanceSkillDamage',
+  '漂泊者（消滅）': 'resonanceLiberationDamage',
+  今汐: 'resonanceSkillDamage',
+  長離: 'resonanceSkillDamage',
+  折枝: 'basicAttackDamage',
+  相里要: 'resonanceLiberationDamage',
+  ショアキーパー: 'resonanceLiberationDamage',
+  釉瑚: 'resonanceSkillDamage',
+  ツバキ: 'basicAttackDamage',
+  灯灯: 'basicAttackDamage',
+  カルロッタ: 'resonanceSkillDamage',
+  ロココ: 'heavyAttackDamage',
+  フィービー: 'heavyAttackDamage',
+  ブラント: 'basicAttackDamage',
+  カンタレラ: 'basicAttackDamage',
+  '漂泊者（気動）': 'resonanceSkillDamage',
+  ザンニー: 'heavyAttackDamage',
+  シャコンヌ: 'heavyAttackDamage',
+  カルテジア: 'resonanceLiberationDamage',
+  ルパ: 'resonanceLiberationDamage',
+  フローヴァ: 'resonanceSkillDamage',
+  オーガスタ: 'heavyAttackDamage',
+  ユーノ: 'resonanceLiberationDamage',
+  ガルブレーナ: 'heavyAttackDamage',
+  仇遠: 'heavyAttackDamage',
+  千咲: 'resonanceLiberationDamage',
+  卜霊: null,
+  リンネー: 'basicAttackDamage',
+  モーニエ: 'resonanceLiberationDamage',
+  エイメス: 'resonanceLiberationDamage',
+  'リューク・ヘルセン': 'basicAttackDamage',
+  シグリカ: null,
+  緋雪: 'resonanceLiberationDamage',
+  ダーニャ: 'resonanceLiberationDamage',
+  レベッカ: 'basicAttackDamage',
+  ルーシー: 'heavyAttackDamage',
+  ルシラー: 'basicAttackDamage',
+  '秧秧・玄翎': 'heavyAttackDamage',
+  '漂泊者（電導）': 'resonanceSkillDamage',
+} as const satisfies Readonly<
+  Record<
+    keyof typeof BASE_CHARACTER_ECHO_SCORE_WEIGHTS,
+    EchoActionDamageStatId | null
+  >
+>
+
+const ACTION_DAMAGE_STAT_IDS = new Set<EchoStatId>([
+  'basicAttackDamage',
+  'heavyAttackDamage',
+  'resonanceSkillDamage',
+  'resonanceLiberationDamage',
+])
+const FLAT_STAT_IDS = new Set<EchoStatId>(['attack', 'hp', 'defense'])
+
+function applyScoringPolicy(
+  characterName: keyof typeof BASE_CHARACTER_ECHO_SCORE_WEIGHTS,
+  source: CharacterEchoScoreWeights,
+): CharacterEchoScoreWeights {
+  const substats: Partial<Record<EchoStatId, number>> = {}
+  for (const [statId, weight] of Object.entries(source.substats) as Array<
+    [EchoStatId, number]
+  >) {
+    if (ACTION_DAMAGE_STAT_IDS.has(statId)) continue
+    substats[statId] = FLAT_STAT_IDS.has(statId)
+      ? ECHO_SCORE_FLAT_STAT_WEIGHT
+      : weight
+  }
+
+  const actionDamageStat = CHARACTER_ECHO_SCORE_ACTION_DAMAGE_STAT[characterName]
+  if (actionDamageStat) {
+    substats[actionDamageStat] = ECHO_SCORE_ACTION_DAMAGE_WEIGHT
+  }
+
+  return {
+    substats,
+    mainStats: source.mainStats,
+  }
 }
+
+export const CHARACTER_ECHO_SCORE_WEIGHTS: Readonly<
+  Record<string, CharacterEchoScoreWeights>
+> = Object.fromEntries(
+  Object.entries(BASE_CHARACTER_ECHO_SCORE_WEIGHTS).map(
+    ([characterName, weights]) => [
+      characterName,
+      applyScoringPolicy(
+        characterName as keyof typeof BASE_CHARACTER_ECHO_SCORE_WEIGHTS,
+        weights,
+      ),
+    ],
+  ),
+)
 
 export const ECHO_SCORE_WEIGHT_SOURCE = {
   title: 'GameWith 音骸スコアチェッカー',
   url: 'https://gamewith.jp/wutheringwaves/451843',
   retrievedAt: '2026-07-24',
 } as const
+
+export const ECHO_SCORE_ACTION_DAMAGE_TIE_BREAK_SOURCES = [
+  'https://gamewith.jp/wutheringwaves/449659',
+  'https://gamewith.jp/wutheringwaves/449655',
+  'https://gamewith.jp/wutheringwaves/449652',
+  'https://gamewith.jp/wutheringwaves/449650',
+  'https://gamewith.jp/wutheringwaves/449644',
+  'https://gamewith.jp/wutheringwaves/449647',
+  'https://gamewith.jp/wutheringwaves/481518',
+  'https://gamewith.jp/wutheringwaves/503941',
+] as const
 
 export const ECHO_SCORE_WEIGHT_OVERRIDES = [
   {

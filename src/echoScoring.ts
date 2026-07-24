@@ -14,7 +14,7 @@ import type {
   EchoStatId,
 } from './types'
 
-export const ECHO_SCORE_FORMULA_VERSION = 'character-v4' as const
+export const ECHO_SCORE_FORMULA_VERSION = 'character-v5' as const
 
 export const ECHO_SCORE_PROFILES: ReadonlyArray<{
   id: EchoScoreProfile
@@ -84,8 +84,8 @@ export function getCharacterEchoScoreWeights(
   return CHARACTER_ECHO_SCORE_WEIGHTS[characterName]
 }
 
-function floorToTwoDecimals(value: number): number {
-  return Math.floor(value * 100) / 100
+function roundToTwoDecimals(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100
 }
 
 export function calculateCharacterEchoScore(
@@ -98,7 +98,7 @@ export function calculateCharacterEchoScore(
     return {
       ...stat,
       weight,
-      score: floorToTwoDecimals(stat.value * weight),
+      score: roundToTwoDecimals(stat.value * weight),
     }
   })
   const substatScore = contributions.reduce(

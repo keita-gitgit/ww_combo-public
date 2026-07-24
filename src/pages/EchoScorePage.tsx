@@ -1033,7 +1033,7 @@ export default function EchoScorePage({ data, setData }: Props) {
         </div>
         <p>
           {selectedWeights
-            ? 'キャラごとの適性に合わせ、メインと全サブステータスへ個別の係数を適用'
+            ? 'キャラごとの適性に合わせ、サブステータスへ個別の係数を適用'
             : `各枠の「クリ率×2 ＋ クリダメ ＋ ${
                 selectedProfile?.label ?? '攻撃'
               }」を合計`}

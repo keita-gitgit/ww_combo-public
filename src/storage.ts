@@ -68,6 +68,7 @@ const ECHO_SCORE_FORMULA_VERSIONS = new Set<EchoScoreFormulaVersion>([
   'character-v2',
   'character-v3',
   'character-v4',
+  'character-v5',
 ])
 const ECHO_STAT_IDS = new Set<EchoStatId>([
   'hp',
