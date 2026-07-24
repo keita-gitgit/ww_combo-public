@@ -560,6 +560,7 @@ textarea::placeholder {
 .swipe-card {
   position: relative;
   z-index: 1;
+  gap: 7px;
   margin-bottom: 0;
   background: var(--card-opaque);
   touch-action: pan-y;
@@ -763,6 +764,32 @@ body.sorting-active {
 .favorite-button:hover {
   color: var(--accent);
   background: var(--accent-soft);
+}
+
+.card-quick-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.card-duplicate-button {
+  display: inline-grid;
+  width: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  place-items: center;
+  padding: 0;
+  border-color: transparent;
+  border-radius: 10px;
+  color: var(--sub-dim);
+  background: transparent;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.card-duplicate-button:hover {
+  color: var(--text);
+  background: var(--surface-soft);
 }
 
 .star-icon {
@@ -1035,6 +1062,10 @@ body.sorting-active {
   justify-content: space-between;
   gap: 8px;
   margin-top: 14px;
+}
+
+.editor-foot-danger {
+  justify-content: flex-end;
 }
 
 .step-card {

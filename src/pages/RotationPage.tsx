@@ -420,7 +420,7 @@ export default function RotationPage({ data, setData }: Props) {
     const combos = [...data.combos]
     combos.splice(sourceIndex + 1, 0, duplicate)
     setData({ ...data, combos })
-    setSelectedComboId(duplicate.id)
+    setOpenSwipe(null)
   }
 
   const toggleFavorite = (id: string) => {
@@ -510,7 +510,6 @@ export default function RotationPage({ data, setData }: Props) {
         onChange={updateCombo}
         onBack={() => setSelectedComboId(null)}
         onDelete={() => deleteCombo(combo.id)}
-        onDuplicate={() => duplicateCombo(combo.id)}
         onChangeMembers={(memberIds) => changeComboMembers(combo.id, memberIds)}
         onAddCharacterAction={addCharacterAction}
         onRenameCharacterAction={renameCharacterAction}
@@ -600,6 +599,7 @@ export default function RotationPage({ data, setData }: Props) {
             onSwipeClose={() => setOpenSwipe(null)}
             onDelete={() => deleteCombo(c.id)}
             onChangeTone={(cardTone) => changeComboTone(c.id, cardTone)}
+            onDuplicate={() => duplicateCombo(c.id)}
             onToggleFavorite={() => toggleFavorite(c.id)}
             onReorder={reorderCombo}
           />
@@ -621,6 +621,7 @@ function SwipeableComboCard({
   onSwipeClose,
   onDelete,
   onChangeTone,
+  onDuplicate,
   onToggleFavorite,
   onReorder,
 }: {
@@ -632,6 +633,7 @@ function SwipeableComboCard({
   onSwipeClose: () => void
   onDelete: () => void
   onChangeTone: (cardTone?: ComboCardTone) => void
+  onDuplicate: () => void
   onToggleFavorite: () => void
   onReorder: (sourceId: string, targetId: string) => void
 }) {
@@ -794,20 +796,34 @@ function SwipeableComboCard({
             </span>
           </span>
         </button>
-        <button
-          className={`favorite-button ${combo.favorite ? 'active' : ''}`}
-          data-card-action
-          data-sort-ignore
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => {
-            event.stopPropagation()
-            onToggleFavorite()
-          }}
-          aria-label={combo.favorite ? 'お気に入りから外す' : 'お気に入りに追加'}
-          aria-pressed={Boolean(combo.favorite)}
-        >
-          <StarIcon filled={Boolean(combo.favorite)} />
-        </button>
+        <span className="card-quick-actions" data-sort-ignore>
+          <button
+            className="card-duplicate-button"
+            data-card-action
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation()
+              onDuplicate()
+            }}
+            aria-label={`${combo.title}を複製`}
+            title="複製"
+          >
+            複製
+          </button>
+          <button
+            className={`favorite-button ${combo.favorite ? 'active' : ''}`}
+            data-card-action
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation()
+              onToggleFavorite()
+            }}
+            aria-label={combo.favorite ? 'お気に入りから外す' : 'お気に入りに追加'}
+            aria-pressed={Boolean(combo.favorite)}
+          >
+            <StarIcon filled={Boolean(combo.favorite)} />
+          </button>
+        </span>
         <span className="drag-grip" data-sort-handle aria-hidden="true">
           ⠿
         </span>
@@ -968,7 +984,6 @@ function ComboEditor({
   onChange,
   onBack,
   onDelete,
-  onDuplicate,
   onChangeMembers,
   onAddCharacterAction,
   onRenameCharacterAction,
@@ -980,7 +995,6 @@ function ComboEditor({
   onChange: (c: Combo) => void
   onBack: () => void
   onDelete: () => void
-  onDuplicate: () => void
   onChangeMembers: (memberIds: string[]) => void
   onAddCharacterAction: (characterId: string, name: string) => void
   onRenameCharacterAction: (characterId: string, actionId: string, name: string) => void
@@ -1500,8 +1514,7 @@ function ComboEditor({
         </div>
       </div>
 
-      <div className="editor-foot">
-        <button onClick={onDuplicate}>ローテーションを複製</button>
+      <div className="editor-foot editor-foot-danger">
         <button className="danger" onClick={onDelete}>
           ローテーションを削除
         </button>
