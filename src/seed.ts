@@ -365,6 +365,7 @@ export function makeSeedData(): AppData {
     characters,
     parties: [party],
     combos: [combo],
+    echoScores: [],
     buttonMap: { ...DEFAULT_BUTTON_MAP },
   }
 }

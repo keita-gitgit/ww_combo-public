@@ -19,6 +19,10 @@ export type EchoVariant = 'standard' | 'nightmare' | 'resonant' | 'resonant-nigh
 
 export type EchoStatUnit = 'flat' | 'percent'
 
+export type EchoScoreProfile = 'attack' | 'hp' | 'defense' | 'energy'
+
+export type EchoScoreRank = 'SS' | 'S' | 'A' | 'B' | 'C' | 'D'
+
 export type EchoStatId =
   | 'hp'
   | 'hpPercent'
@@ -85,6 +89,27 @@ export interface EchoMainStatRule {
     id: EchoStatId
     valueAtFiveStarLevel25: number
   }>
+}
+
+export interface EchoScoreStat {
+  id: EchoStatId
+  value: number
+}
+
+export interface SavedEchoScore {
+  id: string
+  characterId: string
+  echoId: string
+  sonataId: string
+  scoreProfile: EchoScoreProfile
+  mainStatId: EchoStatId
+  substats: EchoScoreStat[]
+  score: number
+  rank: EchoScoreRank
+  /** 計算式を変更しても元データを再計算できるよう、使用した式を記録する */
+  formulaVersion: 'generic-v1'
+  createdAt: string
+  updatedAt: string
 }
 
 export interface CharacterAction {
@@ -165,6 +190,8 @@ export interface AppData {
   characters: Character[]
   parties: Party[]
   combos: Combo[]
+  /** 採点済み音骸。画像は保存せず、読み取った値だけを保持する */
+  echoScores?: SavedEchoScore[]
   /** 技名 → PS5ボタン表記の対応表（設定画面で編集可能） */
   buttonMap?: Record<string, string>
 }

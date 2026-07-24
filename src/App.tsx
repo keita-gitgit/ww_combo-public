@@ -3,11 +3,13 @@ import type { AppData } from './types'
 import { loadData, saveData } from './storage'
 import RotationPage from './pages/RotationPage'
 import SettingsPage from './pages/SettingsPage'
+import EchoScorePage from './pages/EchoScorePage'
 
-type Tab = 'rotation' | 'settings'
+type Tab = 'rotation' | 'echo' | 'settings'
 
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'rotation', label: 'ローテーション' },
+  { id: 'echo', label: '音骸' },
   { id: 'settings', label: '設定' },
 ]
 
@@ -21,6 +23,10 @@ function TabIcon({ id }: { id: Tab }) {
         <circle cx="4" cy="17" r="1" />
       </svg>
     )
+  }
+
+  if (id === 'echo') {
+    return <span className="echo-tab-symbol" aria-hidden="true" />
   }
 
   return (
@@ -56,6 +62,7 @@ export default function App() {
     <div className="app" data-theme={theme}>
       <main className="app-main">
         {tab === 'rotation' && <RotationPage data={data} setData={setData} />}
+        {tab === 'echo' && <EchoScorePage data={data} setData={setData} />}
         {tab === 'settings' && <SettingsPage data={data} setData={setData} />}
       </main>
       <nav className="tab-bar">

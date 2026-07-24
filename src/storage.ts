@@ -8,9 +8,15 @@ import type {
   ComboCardTone,
   ComboAction,
   ComboStep,
+  EchoScoreProfile,
+  EchoScoreRank,
+  EchoScoreStat,
+  EchoStatId,
   Party,
+  SavedEchoScore,
 } from './types'
 import { makeSeedData, syncRoster, DEFAULT_BUTTON_MAP } from './seed'
+import { calculateEchoScore, getEchoScoreRank } from './echoScoring'
 
 const STORAGE_KEY = 'ww_combo_data_v1'
 export const MAX_IMPORT_BYTES = 5 * 1024 * 1024
@@ -19,6 +25,7 @@ const MAX_CHARACTERS = 1_000
 const MAX_ACTIONS_PER_CHARACTER = 1_000
 const MAX_PARTIES = 2_000
 const MAX_COMBOS = 5_000
+const MAX_ECHO_SCORES = 5_000
 const MAX_STEPS_PER_COMBO = 10_000
 const MAX_ACTIONS_PER_STEP = 1_000
 const MAX_REFERENCE_URLS = 20
@@ -42,6 +49,30 @@ const COMBO_CARD_TONES = new Set<ComboCardTone>([
   '気動',
   '回折',
   '消滅',
+])
+const ECHO_SCORE_PROFILES = new Set<EchoScoreProfile>(['attack', 'hp', 'defense', 'energy'])
+const ECHO_SCORE_RANKS = new Set<EchoScoreRank>(['SS', 'S', 'A', 'B', 'C', 'D'])
+const ECHO_STAT_IDS = new Set<EchoStatId>([
+  'hp',
+  'hpPercent',
+  'attack',
+  'attackPercent',
+  'defense',
+  'defensePercent',
+  'critRate',
+  'critDamage',
+  'healingBonus',
+  'energyRegen',
+  'glacioDamage',
+  'fusionDamage',
+  'electroDamage',
+  'aeroDamage',
+  'spectroDamage',
+  'havocDamage',
+  'basicAttackDamage',
+  'heavyAttackDamage',
+  'resonanceSkillDamage',
+  'resonanceLiberationDamage',
 ])
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -172,6 +203,58 @@ function isCombo(value: unknown): value is Combo {
   )
 }
 
+function isEchoScore(value: unknown): value is SavedEchoScore {
+  if (!isRecord(value)) return false
+  if (
+    typeof value.id !== 'string' ||
+    typeof value.characterId !== 'string' ||
+    typeof value.echoId !== 'string' ||
+    typeof value.sonataId !== 'string' ||
+    typeof value.scoreProfile !== 'string' ||
+    !ECHO_SCORE_PROFILES.has(value.scoreProfile as EchoScoreProfile) ||
+    typeof value.mainStatId !== 'string' ||
+    !ECHO_STAT_IDS.has(value.mainStatId as EchoStatId) ||
+    !Array.isArray(value.substats) ||
+    value.substats.length === 0 ||
+    value.substats.length > 5 ||
+    typeof value.score !== 'number' ||
+    !Number.isFinite(value.score) ||
+    value.score < 0 ||
+    value.score > 1_000 ||
+    typeof value.rank !== 'string' ||
+    !ECHO_SCORE_RANKS.has(value.rank as EchoScoreRank) ||
+    value.formulaVersion !== 'generic-v1' ||
+    typeof value.createdAt !== 'string' ||
+    typeof value.updatedAt !== 'string'
+  ) {
+    return false
+  }
+
+  const statIds = new Set<string>()
+  const substats: EchoScoreStat[] = []
+  for (const stat of value.substats) {
+    if (
+      !isRecord(stat) ||
+      typeof stat.id !== 'string' ||
+      !ECHO_STAT_IDS.has(stat.id as EchoStatId) ||
+      statIds.has(stat.id) ||
+      typeof stat.value !== 'number' ||
+      !Number.isFinite(stat.value) ||
+      stat.value < 0 ||
+      stat.value > 10_000
+    ) {
+      return false
+    }
+    statIds.add(stat.id)
+    substats.push({ id: stat.id as EchoStatId, value: stat.value })
+  }
+  const expectedScore = calculateEchoScore(
+    substats,
+    value.scoreProfile as EchoScoreProfile,
+  )
+  return value.score === expectedScore && value.rank === getEchoScoreRank(expectedScore)
+}
+
 function isButtonMap(value: unknown): value is Record<string, string> | undefined {
   if (value === undefined) return true
   if (!isRecord(value)) return false
@@ -195,6 +278,10 @@ function isAppData(value: unknown): value is AppData {
     Array.isArray(value.combos) &&
     value.combos.length <= MAX_COMBOS &&
     value.combos.every(isCombo) &&
+    (value.echoScores === undefined ||
+      (Array.isArray(value.echoScores) &&
+        value.echoScores.length <= MAX_ECHO_SCORES &&
+        value.echoScores.every(isEchoScore))) &&
     isButtonMap(value.buttonMap)
   )
 }

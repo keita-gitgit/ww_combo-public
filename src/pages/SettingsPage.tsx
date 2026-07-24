@@ -240,7 +240,7 @@ export default function SettingsPage({ data, setData }: Props) {
         <h3>データ</h3>
         <p className="hint">
           キャラ {data.characters.length} 件 / パーティ {data.parties.length} 件 / ローテーション{' '}
-          {data.combos.length} 件
+          {data.combos.length} 件 / 音骸スコア {data.echoScores?.length ?? 0} 件
         </p>
         <button className="danger" onClick={reset}>
           初期データに戻す
