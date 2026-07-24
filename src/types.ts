@@ -23,6 +23,8 @@ export type EchoScoreProfile = 'attack' | 'hp' | 'defense' | 'energy'
 
 export type EchoScoreRank = 'SS' | 'S' | 'A' | 'B' | 'C' | 'D'
 
+export type EchoScoreFormulaVersion = 'generic-v1' | 'character-v2'
+
 export type EchoStatId =
   | 'hp'
   | 'hpPercent'
@@ -107,7 +109,7 @@ export interface SavedEchoScore {
   score: number
   rank: EchoScoreRank
   /** 計算式を変更しても元データを再計算できるよう、使用した式を記録する */
-  formulaVersion: 'generic-v1'
+  formulaVersion: EchoScoreFormulaVersion
   createdAt: string
   updatedAt: string
 }
@@ -131,7 +133,7 @@ export interface SavedEchoLoadout {
   slots: EchoLoadoutSlot[]
   /** 5枠それぞれのサブステータススコア合計 */
   totalScore: number
-  formulaVersion: 'generic-v1'
+  formulaVersion: EchoScoreFormulaVersion
   createdAt: string
   updatedAt: string
 }

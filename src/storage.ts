@@ -9,6 +9,7 @@ import type {
   ComboAction,
   ComboStep,
   EchoLoadoutSlot,
+  EchoScoreFormulaVersion,
   EchoScoreProfile,
   EchoScoreRank,
   EchoScoreStat,
@@ -17,10 +18,14 @@ import type {
   SavedEchoLoadout,
   SavedEchoScore,
 } from './types'
+import { ECHO_BY_ID } from './echoData'
 import { makeSeedData, syncRoster, DEFAULT_BUTTON_MAP } from './seed'
 import {
+  ECHO_SCORE_FORMULA_VERSION,
+  calculateCharacterEchoScore,
   calculateEchoLoadoutTotal,
   calculateEchoScore,
+  getCharacterEchoScoreWeights,
   getEchoScoreRank,
 } from './echoScoring'
 
@@ -59,6 +64,10 @@ const COMBO_CARD_TONES = new Set<ComboCardTone>([
 ])
 const ECHO_SCORE_PROFILES = new Set<EchoScoreProfile>(['attack', 'hp', 'defense', 'energy'])
 const ECHO_SCORE_RANKS = new Set<EchoScoreRank>(['SS', 'S', 'A', 'B', 'C', 'D'])
+const ECHO_SCORE_FORMULA_VERSIONS = new Set<EchoScoreFormulaVersion>([
+  'generic-v1',
+  'character-v2',
+])
 const ECHO_STAT_IDS = new Set<EchoStatId>([
   'hp',
   'hpPercent',
@@ -259,7 +268,10 @@ function isEchoScore(value: unknown): value is SavedEchoScore {
     substats,
     value.scoreProfile as EchoScoreProfile,
   )
-  return value.score === expectedScore && value.rank === getEchoScoreRank(expectedScore)
+  return (
+    value.score === expectedScore &&
+    value.rank === getEchoScoreRank(expectedScore, 'generic-v1')
+  )
 }
 
 function isEchoLoadoutSlot(value: unknown): value is EchoLoadoutSlot {
@@ -286,7 +298,6 @@ function isEchoLoadoutSlot(value: unknown): value is EchoLoadoutSlot {
   }
 
   const statIds = new Set<string>()
-  const substats: EchoScoreStat[] = []
   for (const stat of value.substats) {
     if (
       !isRecord(stat) ||
@@ -301,14 +312,9 @@ function isEchoLoadoutSlot(value: unknown): value is EchoLoadoutSlot {
       return false
     }
     statIds.add(stat.id)
-    substats.push({ id: stat.id as EchoStatId, value: stat.value })
   }
 
-  const profiles = [...ECHO_SCORE_PROFILES]
-  return profiles.some((profile) => {
-    const expectedScore = calculateEchoScore(substats, profile)
-    return value.score === expectedScore && value.rank === getEchoScoreRank(expectedScore)
-  })
+  return true
 }
 
 function isEchoLoadout(value: unknown): value is SavedEchoLoadout {
@@ -326,7 +332,10 @@ function isEchoLoadout(value: unknown): value is SavedEchoLoadout {
     !Number.isFinite(value.totalScore) ||
     value.totalScore < 0 ||
     value.totalScore > 5_000 ||
-    value.formulaVersion !== 'generic-v1' ||
+    typeof value.formulaVersion !== 'string' ||
+    !ECHO_SCORE_FORMULA_VERSIONS.has(
+      value.formulaVersion as EchoScoreFormulaVersion,
+    ) ||
     typeof value.createdAt !== 'string' ||
     typeof value.updatedAt !== 'string'
   ) {
@@ -337,10 +346,15 @@ function isEchoLoadout(value: unknown): value is SavedEchoLoadout {
   const slotPositions = new Set(value.slots.map((slot) => slot.position))
   if (slotIds.size !== value.slots.length || slotPositions.size !== value.slots.length) return false
   const profile = value.scoreProfile as EchoScoreProfile
-  const slotsAreConsistent = value.slots.every((slot) => {
-    const expectedScore = calculateEchoScore(slot.substats, profile)
-    return slot.score === expectedScore && slot.rank === getEchoScoreRank(expectedScore)
-  })
+  const slotsAreConsistent =
+    value.formulaVersion === 'character-v2' ||
+    value.slots.every((slot) => {
+      const expectedScore = calculateEchoScore(slot.substats, profile)
+      return (
+        slot.score === expectedScore &&
+        slot.rank === getEchoScoreRank(expectedScore, 'generic-v1')
+      )
+    })
   return (
     slotsAreConsistent &&
     value.totalScore === calculateEchoLoadoutTotal(value.slots.map((slot) => slot.score))
@@ -424,6 +438,56 @@ function migrateEchoScores(data: AppData): AppData {
   }
 }
 
+function migrateEchoScoringFormula(data: AppData): AppData {
+  const records = data.echoLoadouts ?? []
+  if (records.length === 0) return data
+
+  const characterNames = new Map(
+    data.characters.map((character) => [character.id, character.name]),
+  )
+  let changed = false
+  const echoLoadouts = records.map((record) => {
+    const characterName = characterNames.get(record.characterId)
+    if (!characterName || !getCharacterEchoScoreWeights(characterName)) return record
+    const costs = record.slots.map((slot) => ECHO_BY_ID.get(slot.echoId)?.cost)
+    if (costs.some((cost) => !cost)) return record
+
+    const slots = record.slots.map((slot, index) => {
+      const score = calculateCharacterEchoScore(
+        slot.substats,
+        characterName,
+        costs[index],
+        slot.mainStatId,
+      ).total
+      return {
+        ...slot,
+        score,
+        rank: getEchoScoreRank(score, ECHO_SCORE_FORMULA_VERSION),
+      }
+    })
+    const totalScore = calculateEchoLoadoutTotal(slots.map((slot) => slot.score))
+    if (
+      record.formulaVersion !== ECHO_SCORE_FORMULA_VERSION ||
+      record.totalScore !== totalScore ||
+      slots.some(
+        (slot, index) =>
+          slot.score !== record.slots[index].score ||
+          slot.rank !== record.slots[index].rank,
+      )
+    ) {
+      changed = true
+    }
+    return {
+      ...record,
+      slots,
+      totalScore,
+      formulaVersion: ECHO_SCORE_FORMULA_VERSION,
+    }
+  })
+
+  return changed ? { ...data, echoLoadouts } : data
+}
+
 function migrateButtonMap(buttonMap?: Record<string, string>): Record<string, string> {
   const current = buttonMap ?? {}
   return {
@@ -450,8 +514,10 @@ export function loadData(): AppData {
       const parsed: unknown = JSON.parse(raw)
       // 公式キャラ一覧・基本技・ボタン対応表を保存済みデータに反映してから返す
       if (isAppData(parsed)) {
-        return migrateEchoScores(
-          syncRoster({ ...parsed, buttonMap: migrateButtonMap(parsed.buttonMap) }),
+        return migrateEchoScoringFormula(
+          migrateEchoScores(
+            syncRoster({ ...parsed, buttonMap: migrateButtonMap(parsed.buttonMap) }),
+          ),
         )
       }
     }
@@ -489,7 +555,9 @@ export function parseImportedData(text: string): AppData {
   if (!isAppData(parsed)) {
     throw new Error('バックアップファイルの形式が正しくありません')
   }
-  return migrateEchoScores(
-    syncRoster({ ...parsed, buttonMap: migrateButtonMap(parsed.buttonMap) }),
+  return migrateEchoScoringFormula(
+    migrateEchoScores(
+      syncRoster({ ...parsed, buttonMap: migrateButtonMap(parsed.buttonMap) }),
+    ),
   )
 }

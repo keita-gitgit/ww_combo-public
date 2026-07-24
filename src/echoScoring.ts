@@ -1,4 +1,8 @@
 import { ECHO_MAIN_STAT_RULES, ECHO_STAT_BY_ID, ECHO_STAT_DEFINITIONS } from './data/echoStats'
+import {
+  CHARACTER_ECHO_SCORE_WEIGHTS,
+  type CharacterEchoScoreWeights,
+} from './data/echoScoreWeights'
 import type {
   EchoCost,
   EchoMainStatRule,
@@ -9,7 +13,7 @@ import type {
   EchoStatId,
 } from './types'
 
-export const ECHO_SCORE_FORMULA_VERSION = 'generic-v1' as const
+export const ECHO_SCORE_FORMULA_VERSION = 'character-v2' as const
 
 export const ECHO_SCORE_PROFILES: ReadonlyArray<{
   id: EchoScoreProfile
@@ -24,6 +28,18 @@ export const ECHO_SCORE_PROFILES: ReadonlyArray<{
 
 export const ECHO_SUBSTAT_DEFINITIONS: readonly EchoStatDefinition[] =
   ECHO_STAT_DEFINITIONS.filter((stat) => stat.substatValues.length > 0)
+
+export interface EchoScoreContribution extends EchoScoreStat {
+  weight: number
+  score: number
+}
+
+export interface EchoScoreBreakdown {
+  mainStatScore: number
+  substatScore: number
+  total: number
+  contributions: EchoScoreContribution[]
+}
 
 export function getEchoMainStatRule(cost: EchoCost): EchoMainStatRule {
   const rule = ECHO_MAIN_STAT_RULES.find((candidate) => candidate.cost === cost)
@@ -61,7 +77,57 @@ export function calculateEchoScore(
   return Math.round(score * 10) / 10
 }
 
-export function getEchoScoreRank(score: number): EchoScoreRank {
+export function getCharacterEchoScoreWeights(
+  characterName?: string,
+): CharacterEchoScoreWeights | undefined {
+  if (!characterName) return undefined
+  return CHARACTER_ECHO_SCORE_WEIGHTS[characterName]
+}
+
+function floorToTwoDecimals(value: number): number {
+  return Math.floor(value * 100) / 100
+}
+
+export function calculateCharacterEchoScore(
+  substats: readonly EchoScoreStat[],
+  characterName: string,
+  cost?: EchoCost,
+  mainStatId?: EchoStatId,
+): EchoScoreBreakdown {
+  const weights = getCharacterEchoScoreWeights(characterName)
+  const contributions = substats.map((stat) => {
+    const weight = weights?.substats[stat.id] ?? 0
+    return {
+      ...stat,
+      weight,
+      score: floorToTwoDecimals(stat.value * weight),
+    }
+  })
+  const mainStatWeight =
+    weights && cost && mainStatId ? (weights.mainStats[cost][mainStatId] ?? 0) : 0
+  const mainStatScore = 15 * mainStatWeight
+  const substatScore = contributions.reduce(
+    (total, contribution) => total + contribution.score,
+    0,
+  )
+  return {
+    mainStatScore,
+    substatScore,
+    total: Math.round(mainStatScore + substatScore),
+    contributions,
+  }
+}
+
+export function getEchoScoreRank(
+  score: number,
+  formulaVersion: 'generic-v1' | 'character-v2' = 'character-v2',
+): EchoScoreRank {
+  if (formulaVersion === 'character-v2') {
+    if (score >= 65) return 'SS'
+    if (score >= 45) return 'S'
+    if (score >= 25) return 'A'
+    return 'B'
+  }
   if (score >= 48) return 'SS'
   if (score >= 42) return 'S'
   if (score >= 36) return 'A'

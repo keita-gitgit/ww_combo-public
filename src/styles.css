@@ -2264,6 +2264,70 @@ body.sorting-active .repeat-drop-zone::before {
   align-items: end;
 }
 
+.echo-character-score-mode {
+  display: flex;
+  min-height: 42px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 7px 10px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+}
+
+.echo-character-score-mode strong {
+  color: var(--accent);
+  font-size: 0.8125rem;
+}
+
+.echo-character-score-mode small {
+  overflow: hidden;
+  color: var(--sub);
+  font-size: 0.625rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.echo-weight-summary {
+  display: grid;
+  gap: 7px;
+  margin: -2px 0 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-soft);
+}
+
+.echo-weight-summary > span {
+  color: var(--label-text);
+  font-size: 0.6875rem;
+  font-weight: 650;
+}
+
+.echo-weight-summary > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.echo-weight-summary small {
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--card-bg);
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.echo-weight-summary p {
+  margin: 0;
+  color: var(--sub);
+  font-size: 0.625rem;
+  line-height: 1.45;
+}
+
 .echo-loadout-overview {
   margin-bottom: 10px;
   padding: 16px;
@@ -2474,6 +2538,15 @@ body.sorting-active .repeat-drop-zone::before {
   letter-spacing: 0.08em;
 }
 
+.echo-slot-score small {
+  grid-column: 1 / -1;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+  color: var(--sub);
+  font-size: 0.625rem;
+  text-align: right;
+}
+
 .echo-save-warning {
   margin: 6px 3px 8px;
   text-align: center;
@@ -2631,6 +2704,19 @@ body.sorting-active .repeat-drop-zone::before {
   min-height: 42px;
   padding: 8px 9px;
   font-size: 0.875rem;
+}
+
+.echo-substat-contribution {
+  grid-column: 1 / -1;
+  margin-top: -3px;
+  padding-left: 3px;
+  color: var(--accent);
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.echo-substat-contribution.zero {
+  color: var(--sub);
 }
 
 .echo-add-substat {

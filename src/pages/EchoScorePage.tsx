@@ -5,10 +5,12 @@ import {
   ECHO_SCORE_FORMULA_VERSION,
   ECHO_SCORE_PROFILES,
   ECHO_SUBSTAT_DEFINITIONS,
+  calculateCharacterEchoScore,
   calculateEchoLoadoutTotal,
   calculateEchoScore,
   formatEchoStatName,
   formatEchoStatValue,
+  getCharacterEchoScoreWeights,
   getEchoMainStatRule,
   getEchoScoreRank,
 } from '../echoScoring'
@@ -126,12 +128,30 @@ function isCompleteSlot(slot: SlotDraft): boolean {
   )
 }
 
-function getSlotScore(slot: SlotDraft, profile: EchoScoreProfile): number {
+function getSlotScore(
+  slot: SlotDraft,
+  profile: EchoScoreProfile,
+  characterName?: string,
+): number {
+  if (characterName && getCharacterEchoScoreWeights(characterName)) {
+    return calculateCharacterEchoScore(
+      validDraftSubstats(slot.substats),
+      characterName,
+      slot.cost || undefined,
+      slot.mainStatId || undefined,
+    ).total
+  }
   return calculateEchoScore(validDraftSubstats(slot.substats), profile)
 }
 
-function getLoadoutTotal(slots: SlotDraft[], profile: EchoScoreProfile): number {
-  return calculateEchoLoadoutTotal(slots.map((slot) => getSlotScore(slot, profile)))
+function getLoadoutTotal(
+  slots: SlotDraft[],
+  profile: EchoScoreProfile,
+  characterName?: string,
+): number {
+  return calculateEchoLoadoutTotal(
+    slots.map((slot) => getSlotScore(slot, profile, characterName)),
+  )
 }
 
 function getSonataSummary(
@@ -183,11 +203,31 @@ export default function EchoScorePage({ data, setData }: Props) {
   const selectedCharacter = data.characters.find(
     (character) => character.id === draft.characterId,
   )
+  const selectedWeights = getCharacterEchoScoreWeights(selectedCharacter?.name)
   const activeSubstats = validDraftSubstats(activeSlot.substats)
-  const activeScore = calculateEchoScore(activeSubstats, draft.scoreProfile)
-  const activeRank = getEchoScoreRank(activeScore)
+  const activeBreakdown = selectedCharacter && selectedWeights
+    ? calculateCharacterEchoScore(
+        activeSubstats,
+        selectedCharacter.name,
+        activeSlot.cost || undefined,
+        activeSlot.mainStatId || undefined,
+      )
+    : undefined
+  const activeScore = getSlotScore(
+    activeSlot,
+    draft.scoreProfile,
+    selectedCharacter?.name,
+  )
+  const activeRank = getEchoScoreRank(
+    activeScore,
+    selectedWeights ? 'character-v2' : 'generic-v1',
+  )
   const completedSlots = draft.slots.filter(isCompleteSlot)
-  const totalScore = getLoadoutTotal(draft.slots, draft.scoreProfile)
+  const totalScore = getLoadoutTotal(
+    draft.slots,
+    draft.scoreProfile,
+    selectedCharacter?.name,
+  )
   const totalCost = getDraftTotalCost(draft.slots)
   const sonataSummary = getSonataSummary(draft.slots)
   const hasIncompleteSlot = draft.slots.some(
@@ -321,7 +361,7 @@ export default function EchoScorePage({ data, setData }: Props) {
     }
 
     const slots: EchoLoadoutSlot[] = completedSlots.map((slot) => {
-      const score = getSlotScore(slot, draft.scoreProfile)
+      const score = getSlotScore(slot, draft.scoreProfile, selectedCharacter?.name)
       return {
         id: slot.id,
         position: slot.position,
@@ -330,7 +370,10 @@ export default function EchoScorePage({ data, setData }: Props) {
         mainStatId: slot.mainStatId as EchoStatId,
         substats: validDraftSubstats(slot.substats),
         score,
-        rank: getEchoScoreRank(score),
+        rank: getEchoScoreRank(
+          score,
+          selectedWeights ? 'character-v2' : 'generic-v1',
+        ),
       }
     })
     const now = new Date().toISOString()
@@ -341,7 +384,7 @@ export default function EchoScorePage({ data, setData }: Props) {
       scoreProfile: draft.scoreProfile,
       slots,
       totalScore: calculateEchoLoadoutTotal(slots.map((slot) => slot.score)),
-      formulaVersion: ECHO_SCORE_FORMULA_VERSION,
+      formulaVersion: selectedWeights ? ECHO_SCORE_FORMULA_VERSION : 'generic-v1',
       createdAt: previous?.createdAt ?? now,
       updatedAt: now,
     }
@@ -474,24 +517,48 @@ export default function EchoScorePage({ data, setData }: Props) {
           </select>
         </label>
 
-        <div className="echo-field">
-          <span>評価タイプ</span>
-          <div className="echo-profile-options" role="group" aria-label="評価タイプ">
-            {ECHO_SCORE_PROFILES.map((profile) => (
-              <button
-                key={profile.id}
-                className={draft.scoreProfile === profile.id ? 'active' : ''}
-                aria-pressed={draft.scoreProfile === profile.id}
-                onClick={() =>
-                  setDraft((current) => ({ ...current, scoreProfile: profile.id }))
-                }
-              >
-                {profile.label}
-              </button>
+        {selectedWeights ? (
+          <div className="echo-field">
+            <span>評価方式</span>
+            <div className="echo-character-score-mode">
+              <strong>キャラ別評価</strong>
+              <small>{selectedCharacter?.name}の主力ステータスを反映</small>
+            </div>
+          </div>
+        ) : (
+          <div className="echo-field">
+            <span>評価タイプ</span>
+            <div className="echo-profile-options" role="group" aria-label="評価タイプ">
+              {ECHO_SCORE_PROFILES.map((profile) => (
+                <button
+                  key={profile.id}
+                  className={draft.scoreProfile === profile.id ? 'active' : ''}
+                  aria-pressed={draft.scoreProfile === profile.id}
+                  onClick={() =>
+                    setDraft((current) => ({ ...current, scoreProfile: profile.id }))
+                  }
+                >
+                  {profile.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {selectedWeights && (
+        <section className="echo-weight-summary" aria-label="キャラ別の評価係数">
+          <span>評価係数</span>
+          <div>
+            {Object.entries(selectedWeights.substats).map(([statId, weight]) => (
+              <small key={statId}>
+                {formatEchoStatName(statId as EchoStatId)} ×{weight}
+              </small>
             ))}
           </div>
-        </div>
-      </section>
+          <p>表示のないステータスは0点。メインは適性に応じて0〜15点加算します。</p>
+        </section>
+      )}
 
       <section className="card echo-loadout-overview">
         <div className="echo-loadout-totals">
@@ -508,7 +575,11 @@ export default function EchoScorePage({ data, setData }: Props) {
         <div className="echo-slot-tabs" role="tablist" aria-label="音骸の装備枠">
           {draft.slots.map((slot, index) => {
             const echo = ECHO_BY_ID.get(slot.echoId)
-            const slotScore = getSlotScore(slot, draft.scoreProfile)
+            const slotScore = getSlotScore(
+              slot,
+              draft.scoreProfile,
+              selectedCharacter?.name,
+            )
             return (
               <button
                 key={slot.id}
@@ -688,6 +759,9 @@ export default function EchoScorePage({ data, setData }: Props) {
                 .map((candidate) => candidate.id)
                 .filter(Boolean),
             )
+            const contribution = activeBreakdown?.contributions.find(
+              (candidate) => candidate.id === stat.id,
+            )
             return (
               <div key={index} className="echo-substat-row">
                 <select
@@ -736,6 +810,16 @@ export default function EchoScorePage({ data, setData }: Props) {
                 >
                   ×
                 </button>
+                {stat.id && selectedWeights && (
+                  <small
+                    className={`echo-substat-contribution ${
+                      contribution?.weight ? '' : 'zero'
+                    }`}
+                  >
+                    評価 ×{contribution?.weight ?? 0}
+                    {stat.value !== '' && ` → ${contribution?.score ?? 0}点`}
+                  </small>
+                )}
               </div>
             )
           })}
@@ -745,6 +829,12 @@ export default function EchoScorePage({ data, setData }: Props) {
           <span>音骸{activeSlot.position}のスコア</span>
           <strong>{activeSubstats.length > 0 ? activeScore.toFixed(1) : '—'}</strong>
           <b>{activeSubstats.length > 0 ? activeRank : '—'}</b>
+          {activeBreakdown && activeSlot.mainStatId && (
+            <small>
+              メイン {activeBreakdown.mainStatScore.toFixed(1)} ＋ サブ{' '}
+              {activeBreakdown.substatScore.toFixed(1)}
+            </small>
+          )}
         </div>
       </section>
 
@@ -761,7 +851,11 @@ export default function EchoScorePage({ data, setData }: Props) {
           <strong>{completedSlots.length > 0 ? totalScore.toFixed(1) : '—'}</strong>
         </div>
         <p>
-          各枠の「クリ率×2 ＋ クリダメ ＋ {selectedProfile?.label ?? '攻撃'}」を合計
+          {selectedWeights
+            ? 'キャラごとの適性に合わせ、メインと全サブステータスへ個別の係数を適用'
+            : `各枠の「クリ率×2 ＋ クリダメ ＋ ${
+                selectedProfile?.label ?? '攻撃'
+              }」を合計`}
         </p>
       </section>
 
